@@ -9,7 +9,7 @@
 
 ## 1. Objetivo
 
-Em uma empresa, ninguém escreve requisitos, código ou documentos "do seu jeito": existem padrões que todos seguem, para que a qualidade seja a mesma em qualquer arquivo que se abra. Este documento é o padrão da equipe do GameTrack para **escrever**, **verificar** e **analisar** requisitos.
+Este documento é o padrão da equipe do GameTrack para **escrever**, **verificar** e **analisar** requisitos.
 
 Todas as regras foram extraídas do capítulo 1 («Análise de Requisitos») do livro *Engenharia de Software Aplicada – Fundamentos*, de Rogério Magela (MAGELA, 2006), e cada uma indica a seção e a página de origem. As páginas seguem a numeração impressa do capítulo.
 
@@ -72,11 +72,11 @@ O livro explica que os requisitos têm atributos porque **não são fixos no tem
 
 | Código | Regra | Base | Teste (sim/não) |
 |---|---|---|---|
-| F1 | Todo requisito tem todos os campos obrigatórios preenchidos, e cada campo de lista contém um valor da lista | 5 (p. 11-13) | Existe campo vazio ou valor fora da lista? (deve ser não) |
+| F1 | Todo requisito tem todos os campos obrigatórios preenchidos, e cada campo de lista contém um valor da lista | 5 (p. 11-13) | Existe campo vazio ou valor fora da lista? |
 | F2 | A data da última mudança de Situação está registrada, no formato `AAAA-MM-DD` | 5.2 (p. 11) | A data existe e casa com o formato? |
-| F3 | Somente requisitos com Situação `Aprovado` e Versão de destino escolhida são implementados | 5.7 (p. 12) | Algum requisito em implementação não está `Aprovado`? (deve ser não) |
+| F3 | Somente requisitos com Situação `Aprovado` e Versão de destino escolhida são implementados | 5.7 (p. 12) | Algum requisito em implementação não está `Aprovado`? |
 
-## 4. Regras de redação (seção 7.2 do livro)
+## 4. Regras de redação
 
 Estas regras valem para a **descrição** de cada requisito. O livro as apresenta como um guia de especificação (p. 18-19), e a equipe as transformou em testes de sim ou não. As listas citadas (palavras proibidas, glossário, verbos e palavras de apoio) estão nos Apêndices A e B.
 
@@ -87,14 +87,14 @@ Estas regras valem para a **descrição** de cada requisito. O livro as apresent
 | R3 | A descrição não contém nenhuma palavra da lista de palavras proibidas (Apêndice B.1), sem diferenciar maiúsculas de minúsculas. Exceção: em RNF, o «e» entre dois nomes da lista de produtos externos (Apêndice B.3) é aceito | 7.2.2 (p. 18) | A busca pelas palavras da lista retorna zero ocorrências? |
 | R4 | A descrição tem no máximo **L** palavras e um único ponto final, no fim | 7.2.3 (p. 18): «evite frases grandes» | Palavras (separadas por espaço) ≤ 12 e pontos finais = 1? |
 | R5 | A descrição não contém pronome possessivo: meu, minha, meus, minhas, nosso, nossa, nossos, nossas, seu, sua, seus, suas | 7.2.3 (p. 18): o exemplo incorreto usa «de nossa estimada empresa» | A busca pelos possessivos retorna zero ocorrências? |
-| R6 | Toda palavra da descrição está no glossário (Apêndice A), na lista de verbos ou na lista de palavras de apoio (Apêndice B.2 e B.3). O plural dos termos do glossário é aceito (acrescentar s ou es; exceção: item → itens) | 7.2.4 (p. 18): vocabulário fechado, com glossário | Existe palavra fora das três listas? (deve ser não) |
+| R6 | Toda palavra da descrição está no glossário (Apêndice A), na lista de verbos ou na lista de palavras de apoio (Apêndice B.2 e B.3). O plural dos termos do glossário é aceito (acrescentar s ou es; exceção: item → itens) | 7.2.4 (p. 18): vocabulário fechado, com glossário | Existe palavra fora das três listas? |
 | R7 | Um requisito com filho é detalhado apenas por filhos cujo identificador siga N3, e o identificador tem no máximo **H** níveis | 7.2.5 (p. 19): estrutura hierárquica | O pai existe, N3 vale e o número de níveis é ≤ 3? |
 | R8 | A criação ou a alteração de um requisito atualiza a ficha (Benefício, Situação, Esforço, Risco etc.) **no mesmo momento**, sem deixar para depois | 7.2.6 (p. 19) | Todos os campos da ficha foram revisados na data da mudança? |
 | R9 | Todo requisito tem um Grupo da lista fechada e o documento de requisitos é apresentado agrupado por Grupo | 7.2.7 (p. 19) | O campo Grupo está preenchido e o documento está ordenado por Grupo? |
 | R10 | Todo RF macro (sem pai) corresponde a **um** caso de uso, e todo caso de uso corresponde a **um** RF macro | 7.2.8 (p. 19); 4 (p. 9-10), regras BR1 e BR3 | A relação entre RF macro e casos de uso é de um para um? |
 | R11 | Todo RF macro é restringido por ao menos um RNF, e ao menos um deles é de Corretude ou de Confiabilidade. O RNF de Corretude informa o índice alto, médio ou baixo | 7.2.9 (p. 19); 3.1 e 3.2 (p. 7) | Existe RNF com Restringe = RF macro, de categoria Corretude ou Confiabilidade? |
 
-## 5. Regras de análise (seção 7.3 do livro)
+## 5. Regras de análise
 
 A análise garante a **consistência e a qualidade** dos requisitos já especificados (p. 19). O livro recomenda que ela seja feita por **outro analista**, e não por quem especificou os requisitos, porque a mesma mente repete os mesmos erros (p. 19). Os onze itens de qualidade do livro viraram os testes abaixo.
 
@@ -123,7 +123,7 @@ A análise garante a **consistência e a qualidade** dos requisitos já especifi
 |---|---|---|---|---|---|---|---|---|---|
 | RF001 | | | | | | | | | |
 
-## 7. Gerência de mudanças (seções 7.4 e 7.5 do livro)
+## 7. Gerência de mudanças
 
 O livro alerta que, logo depois da aprovação, os requisitos já começam a se modificar, e que a gerência de mudanças é «a tarefa mais árdua e mais crítica» da engenharia de requisitos (p. 24). Por isso a equipe definiu a política de mudança **antes** de ter requisitos aprovados, como o livro pede (7.5.5, p. 25).
 
