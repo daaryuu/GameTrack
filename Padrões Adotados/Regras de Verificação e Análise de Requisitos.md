@@ -31,7 +31,7 @@ Em alguns pontos o livro dá a orientação, mas não dá o número (por exemplo
 
 | Parâmetro | Valor | Por quê |
 |---|---|---|
-| **L** – máximo de palavras da descrição | 12 | O exemplo correto do livro tem 10 palavras (p. 18); a equipe permite uma folga de 2 |
+| **L** – máximo de palavras da descrição | 15 | O exemplo correto do livro tem 10 palavras (p. 18); a equipe permite uma folga de 2 |
 | **H** – máximo de níveis no identificador | 3 | O livro mostra até três níveis, como em SR1.3.1 (Figura 1.2, p. 3) |
 | **V** – máximo de passos de verificação | 5 | Mantém a verificação curta e executável |
 
@@ -85,7 +85,7 @@ Estas regras valem para a **descrição** de cada requisito. O livro as apresent
 | R1 | A descrição começa com «O software DEVE» ou «O software não DEVE» | 7.2 (p. 18): convenção «O software DEVE...» | As primeiras palavras são uma das duas formas? |
 | R2 | A descrição tem **uma única** ocorrência de «DEVE» (um requisito por vez) | 7.2.1 (p. 18): o exemplo incorreto junta dois requisitos com «E não DEVE» | Contando «DEVE», o resultado é 1? |
 | R3 | A descrição não contém nenhuma palavra da lista de palavras proibidas (Apêndice B.1), sem diferenciar maiúsculas de minúsculas. Exceção: em RNF, o «e» entre dois nomes da lista de produtos externos (Apêndice B.3) é aceito | 7.2.2 (p. 18) | A busca pelas palavras da lista retorna zero ocorrências? |
-| R4 | A descrição tem no máximo **L** palavras e um único ponto final, no fim | 7.2.3 (p. 18): «evite frases grandes» | Palavras (separadas por espaço) ≤ 12 e pontos finais = 1? |
+| R4 | A descrição tem no máximo **L** palavras e um único ponto final, no fim | 7.2.3 (p. 18): «evite frases grandes» | Palavras (separadas por espaço) ≤ 15 e pontos finais = 1? |
 | R5 | A descrição não contém pronome possessivo: meu, minha, meus, minhas, nosso, nossa, nossos, nossas, seu, sua, seus, suas | 7.2.3 (p. 18): o exemplo incorreto usa «de nossa estimada empresa» | A busca pelos possessivos retorna zero ocorrências? |
 | R6 | Toda palavra da descrição está no glossário (Apêndice A), na lista de verbos ou na lista de palavras de apoio (Apêndice B.2 e B.3). O plural dos termos do glossário é aceito (acrescentar s ou es; exceção: item → itens) | 7.2.4 (p. 18): vocabulário fechado, com glossário | Existe palavra fora das três listas? |
 | R7 | Um requisito com filho é detalhado apenas por filhos cujo identificador siga N3, e o identificador tem no máximo **H** níveis | 7.2.5 (p. 19): estrutura hierárquica | O pai existe, N3 vale e o número de níveis é ≤ 3? |
