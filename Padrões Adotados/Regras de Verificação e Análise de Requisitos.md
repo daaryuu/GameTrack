@@ -5,11 +5,11 @@
 | **Projeto** | GameTrack |
 | **Pasta** | Padrões Adotados |
 | **Equipe** | Rafael Alves Bortolotti e Pedro Saunders Alves Durazzo |
-| **Versão** | 1.0 |
+| **Versão** | 1.2 |
 
 ## 1. Objetivo
 
- Este documento é o padrão da equipe do GameTrack para escrever, verificar e analisar requisitos.
+Em uma empresa, ninguém escreve requisitos, código ou documentos "do seu jeito": existem padrões que todos seguem, para que a qualidade seja a mesma em qualquer arquivo que se abra. Este documento é o padrão da equipe do GameTrack para **escrever**, **verificar** e **analisar** requisitos.
 
 Todas as regras foram extraídas do capítulo 1 («Análise de Requisitos») do livro *Engenharia de Software Aplicada – Fundamentos*, de Rogério Magela (MAGELA, 2006), e cada uma indica a seção e a página de origem. As páginas seguem a numeração impressa do capítulo.
 
@@ -41,10 +41,10 @@ O livro define dois tipos de requisito segundo o aspecto (p. 3): o **requisito f
 
 | Código | Regra | Base | Teste (sim/não) |
 |---|---|---|---|
-| N1 | O identificador tem o formato `RF-nn` ou `RNF-nn`, com filhos `RF-nn.n` e `RF-nn.n.n`. Expressão: `^(RF\|RNF)-[0-9]{2}(\.[0-9]{1,2}){0,2}$` | 3 (p. 3); 7.3.9 (p. 22) | O identificador casa com a expressão? |
+| N1 | O identificador tem o formato `RFnnn` ou `RNFnnn` (três dígitos, sem hífen), com filhos `RFnnn.n` e `RFnnn.n.n`. Expressão: `^(RF\|RNF)[0-9]{3}(\.[0-9]{1,2}){0,2}$` | 3 (p. 3); 7.3.9 (p. 22) | O identificador casa com a expressão? |
 | N2 | O identificador é único e **nunca reaproveitado**. Requisito vetado continua na lista, com a Situação `Vetado` | 7.3.9 (p. 22); 5.2 (p. 12) | Algum identificador aparece duas vezes ou sumiu da lista? (deve ser não) |
-| N3 | O identificador de um filho começa com o identificador do pai, seguido de ponto e do número do filho (RF-03.1 é filho de RF-03) | 7.2.5 (p. 19); Figura 1.2 (p. 3) | O prefixo do filho é igual ao identificador do campo Pai? |
-| N4 | Cada caso de uso é identificado como `UC-nn`, com o mesmo número do RF macro que ele representa | 4 (p. 9-10) | O `UC-nn` tem o mesmo nn do RF macro correspondente? |
+| N3 | O identificador de um filho começa com o identificador do pai, seguido de ponto e do número do filho (RF003.1 é filho de RF003) | 7.2.5 (p. 19); Figura 1.2 (p. 3) | O prefixo do filho é igual ao identificador do campo Pai? |
+| N4 | Cada caso de uso é descrito em um bloco com o identificador do RF macro que ele representa, no formato `[RFnnn] Nome` | 4 (p. 9-10) | O bloco do caso de uso traz o mesmo identificador do RF macro correspondente? |
 | N5 | O RNF informa o campo **Restringe** (um ou mais RF macro) e o campo **Categoria** (uma das 15 da seção 3 do livro) | 3 (p. 6-9); 6 (p. 13) | Os dois campos estão preenchidos e a categoria pertence à lista da seção 3? |
 
 ## 3. Ficha do requisito
@@ -55,7 +55,7 @@ O livro explica que os requisitos têm atributos porque **não são fixos no tem
 |---|---|---|
 | ID | Conforme N1 | 7.3.9 |
 | Descrição | Conforme as regras R | 7.2 |
-| Grupo | Conta, Biblioteca, Categorias, Tags, Reviews e Notas, Tempo Jogado | 7.2.7; 7.3.11 |
+| Grupo | Conta, Catálogo, Biblioteca, Categorias, Reviews e Notas | 7.2.7; 7.3.11 |
 | Pai | ID de um RF existente, ou `—` se for requisito macro | 7.2.5 |
 | Restringe | Apenas RNF: ID de um ou mais RF macro | 7.2.9; 6 |
 | Categoria | Apenas RNF: Corretude, Confiabilidade, Robustez, Desempenho, Facilidade de Uso, Verificabilidade, Facilidade de Manutenção, Reutilização, Portabilidade, Compreensibilidade, Interoperabilidade, Produtividade, Desvio de Planejamento, Visibilidade, Segurança | 3.1 a 3.15 (p. 7-9) |
@@ -84,10 +84,10 @@ Estas regras valem para a **descrição** de cada requisito. O livro as apresent
 |---|---|---|---|
 | R1 | A descrição começa com «O software DEVE» ou «O software não DEVE» | 7.2 (p. 18): convenção «O software DEVE...» | As primeiras palavras são uma das duas formas? |
 | R2 | A descrição tem **uma única** ocorrência de «DEVE» (um requisito por vez) | 7.2.1 (p. 18): o exemplo incorreto junta dois requisitos com «E não DEVE» | Contando «DEVE», o resultado é 1? |
-| R3 | A descrição não contém nenhuma palavra da lista de palavras proibidas (Apêndice B.1), sem diferenciar maiúsculas de minúsculas | 7.2.2 (p. 18) | A busca pelas palavras da lista retorna zero ocorrências? |
-| R4 | A descrição tem no máximo **L** palavras e um único ponto final, no fim | 7.2.3 (p. 18): «evite frases grandes» | Palavras ≤ 12 e pontos finais = 1? |
+| R3 | A descrição não contém nenhuma palavra da lista de palavras proibidas (Apêndice B.1), sem diferenciar maiúsculas de minúsculas. Exceção: em RNF, o «e» entre dois nomes da lista de produtos externos (Apêndice B.3) é aceito | 7.2.2 (p. 18) | A busca pelas palavras da lista retorna zero ocorrências? |
+| R4 | A descrição tem no máximo **L** palavras e um único ponto final, no fim | 7.2.3 (p. 18): «evite frases grandes» | Palavras (separadas por espaço) ≤ 12 e pontos finais = 1? |
 | R5 | A descrição não contém pronome possessivo: meu, minha, meus, minhas, nosso, nossa, nossos, nossas, seu, sua, seus, suas | 7.2.3 (p. 18): o exemplo incorreto usa «de nossa estimada empresa» | A busca pelos possessivos retorna zero ocorrências? |
-| R6 | Toda palavra da descrição está no glossário (Apêndice A), na lista de verbos ou na lista de palavras de apoio (Apêndice B.2 e B.3) | 7.2.4 (p. 18): vocabulário fechado, com glossário | Existe palavra fora das três listas? (deve ser não) |
+| R6 | Toda palavra da descrição está no glossário (Apêndice A), na lista de verbos ou na lista de palavras de apoio (Apêndice B.2 e B.3). O plural dos termos do glossário é aceito (acrescentar s ou es; exceção: item → itens) | 7.2.4 (p. 18): vocabulário fechado, com glossário | Existe palavra fora das três listas? (deve ser não) |
 | R7 | Um requisito com filho é detalhado apenas por filhos cujo identificador siga N3, e o identificador tem no máximo **H** níveis | 7.2.5 (p. 19): estrutura hierárquica | O pai existe, N3 vale e o número de níveis é ≤ 3? |
 | R8 | A criação ou a alteração de um requisito atualiza a ficha (Benefício, Situação, Esforço, Risco etc.) **no mesmo momento**, sem deixar para depois | 7.2.6 (p. 19) | Todos os campos da ficha foram revisados na data da mudança? |
 | R9 | Todo requisito tem um Grupo da lista fechada e o documento de requisitos é apresentado agrupado por Grupo | 7.2.7 (p. 19) | O campo Grupo está preenchido e o documento está ordenado por Grupo? |
@@ -109,7 +109,7 @@ A análise garante a **consistência e a qualidade** dos requisitos já especifi
 | Q7 | **Modificável:** o requisito é pequeno e conciso (R4) e, ao ser alterado, **mantém o identificador**; a mudança vira uma linha no histórico (G2) | 7.3.7 (p. 21-22) | R4 passa e o identificador é o mesmo entre as versões? |
 | Q8 | **Rastreável para trás:** a origem do requisito está no campo Fonte, com quem solicitou e o motivo | 7.3.8 (p. 22): o exemplo do tempo de dez segundos pergunta «de onde surgiu esse requisito?» | O campo Fonte tem as duas partes preenchidas? |
 | Q9 | **Rastreável para frente:** a matriz de rastreabilidade (RTM) liga cada RF ao caso de uso, aos RNF que o restringem e, conforme a fase, ao elemento de modelo e ao arquivo de código. Não existe requisito de teste separado: o teste vem dos RNF de Corretude e Confiabilidade | 7.3.9 (p. 22); 6 (p. 13) | Nenhuma célula das colunas exigidas pela fase atual está vazia? |
-| Q10 | **Independente de projeto:** o requisito não impõe estrutura de projeto nem tecnologia. A descrição não contém termo das listas B.4 e B.5 | 7.3.10 (p. 22): o livro proíbe «o sistema deve ser composto pelos módulos A, B e C» | A busca pelos termos retorna zero ocorrências? |
+| Q10 | **Independente de projeto:** o requisito não impõe estrutura de projeto nem tecnologia. A descrição de RF não contém termo das listas B.4 e B.5. A descrição de RNF aceita apenas os produtos e padrões externos da lista do Apêndice B.3 (exigidos por Q4) e o termo «banco» do glossário | 7.3.10 (p. 22): o livro proíbe «o sistema deve ser composto pelos módulos A, B e C»; 3 (p. 6-9): RNF de portabilidade e segurança citam plataformas e padrões | A busca pelos termos retorna zero ocorrências, descontados os produtos externos do RNF? |
 | Q11 | **Organizada:** a especificação não é uma lista de frases. Ela segue duas dimensões: o **Grupo** (organização pelo problema) e a **hierarquia** (campo Pai). Todo Grupo tem ao menos um requisito | 7.3.11 (p. 22-23) | O documento está ordenado por Grupo e depois por ID, e nenhum Grupo está vazio? |
 
 ## 6. Procedimento de verificação e análise
@@ -121,7 +121,7 @@ A análise garante a **consistência e a qualidade** dos requisitos já especifi
 
 | Requisito | N1-N5 | F1-F3 | R1-R6 | R7-R11 | Q1-Q4 | Q5-Q8 | Q9-Q11 | Revisor | Resultado |
 |---|---|---|---|---|---|---|---|---|---|
-| RF-01 | | | | | | | | | |
+| RF001 | | | | | | | | | |
 
 ## 7. Gerência de mudanças (seções 7.4 e 7.5 do livro)
 
@@ -132,7 +132,7 @@ O livro alerta que, logo depois da aprovação, os requisitos já começam a se 
 | G1 | Toda proposta de mudança é aberta como **Issue** do GitHub, com o rótulo `requisito` e os campos: ID do requisito, motivo, solicitante, data e requisitos impactados (obtidos da RTM). Pedidos por outro meio não valem | 7.4.1 (p. 23): o pedido de alteração é formalizado em um pequeno formulário; 7.5.3 (p. 25) | A Issue tem os cinco campos preenchidos? |
 | G2 | Cada alteração gera uma linha no histórico do requisito, com data, solicitante, motivo e versão | 7.5.3 (p. 25): histórico de cada atualização, com datas, usuário solicitante e motivo | Existe uma linha no histórico para cada alteração? |
 | G3 | RF macro que gere um **novo caso de uso** só passa a `Aprovado` com o aceite do professor da disciplina, registrado na Issue. O professor faz o papel do financiador citado no livro | 7.5.1 (p. 25): os macro que implicam novos casos de uso só entram com aprovação do financiador | O aceite do professor está anexado à Issue? |
-| G4 | O modelo e o código só mudam depois que o requisito correspondente muda. A mensagem de todo commit que altera modelo ou código cita o ID do requisito, no formato `RF-nn: resumo (#issue)` | 7.5.2 (p. 25) | A mensagem do commit contém um ID que casa com N1? |
+| G4 | O modelo e o código só mudam depois que o requisito correspondente muda. A mensagem de todo commit que altera modelo ou código cita o ID do requisito, no formato `RFnnn: resumo (#issue)` | 7.5.2 (p. 25) | A mensagem do commit contém um ID que casa com N1? |
 | G5 | Qualquer alteração **neste documento** (regras, parâmetros L, H e V, glossário, listas) também é aberta como Issue, aumenta a versão do documento e é revisada por outro integrante | 7.5.5 (p. 25) | A versão do documento aumentou e há Issue referenciada? |
 
 ### 7.1 Política de mudança do GameTrack
@@ -153,28 +153,36 @@ Os exemplos abaixo foram conferidos contra as regras N1, R1 a R6, Q4, Q5, Q6 e Q
 
 ### 8.1 Requisitos que passam
 
+Os exemplos são requisitos reais do GameTrack.
+
 | ID | Descrição | Palavras | Resultado |
 |---|---|---|---|
-| RF-01 | O software DEVE permitir o cadastro de jogos. | 8 | Passa |
-| RF-01.1 | O software DEVE exigir uma plataforma para cada jogo. | 9 | Passa |
-| RF-01.2 | O software DEVE exigir um gênero para cada jogo. | 9 | Passa |
-| RF-02 | O software DEVE permitir criar categorias. | 6 | Passa |
-| RF-03 | O software DEVE permitir aplicar uma tag a um jogo. | 10 | Passa |
-| RF-04 | O software DEVE permitir o registro de reviews. | 8 | Passa |
-| RF-04.1 | O software DEVE exigir nota de 1 a 5 estrelas na review. | 12 | Passa |
-| RF-05 | O software DEVE permitir o registro do tempo jogado. | 9 | Passa |
-| RNF-01 | O software DEVE listar a biblioteca em no máximo 2 segundos. | 11 | Passa (Q4: número com unidade; categoria Desempenho) |
-| RNF-02 | O software DEVE exigir senha com no mínimo 8 caracteres. | 10 | Passa (Q4: número com unidade; categoria Segurança) |
+| RF001 | O software DEVE permitir o cadastro de contas. | 8 | Passa |
+| RF001.1 | O software DEVE impedir 2 usuários com o mesmo apelido. | 10 | Passa |
+| RF003 | O software DEVE permitir ao administrador cadastrar jogos no catálogo. | 10 | Passa |
+| RF004.1 | O software DEVE permitir filtrar o catálogo por dados do jogo. | 11 | Passa |
+| RF007 | O software DEVE permitir ao usuário cadastrar um item na biblioteca. | 11 | Passa |
+| RF007.3 | O software DEVE atribuir o status Backlog ao cadastrar um item. | 11 | Passa |
+| RF010.1 | O software DEVE manter o jogo no catálogo ao excluir o item. | 12 | Passa |
+| RF012.2 | O software DEVE exigir nota de 1 a 5 estrelas na review. | 12 | Passa |
+| RNF001 | O software DEVE permitir concluir cada operação em até 5 cliques. | 11 | Passa (Q4: número com unidade; categoria Facilidade de Uso) |
+| RNF002 | O software DEVE exibir o resultado da gravação em até 1 segundo. | 12 | Passa (Q4: número com unidade; categoria Facilidade de Uso) |
+| RNF004 | O software DEVE listar até 500 itens em até 2 segundos. | 11 | Passa (Q4: número com unidade; categoria Desempenho) |
+| RNF005 | O software DEVE exigir senha com no mínimo 8 caracteres. | 10 | Passa (Q4: número com unidade; categoria Segurança) |
+| RNF006 | O software DEVE armazenar senhas com hash bcrypt. | 8 | Passa (Q4: padrão nomeado (bcrypt); categoria Segurança) |
+| RNF007 | O software DEVE encerrar a sessão após 30 minutos sem uso. | 11 | Passa (Q4: número com unidade; categoria Segurança) |
+| RNF008 | O software DEVE executar com Java 25 e MySQL 9.7 LTS. | 11 | Passa (Q4: produtos nomeados (Java 25, MySQL 9.7 LTS); categoria Portabilidade) |
 
 ### 8.2 Requisitos que não passam
 
 | Descrição | Regras violadas | Motivo |
 |---|---|---|
-| RF3 – O software deverá ser amigável e permitir cadastrar jogos e plataformas. | N1, R1, R2, R3, R6, Q4 | ID sem hífen e sem dois dígitos; não usa «DEVE»; contém «amigável» e «e»; «deverá» e «ser» fora das listas |
-| RF-06 – O software DEVE permitir o registro de nossas resenhas. | R5, R6, Q5 | Possessivo «nossas»; «resenhas» é termo remetido ao glossário (o termo é «review») |
-| RF-07 – O software DEVE gravar jogos em tabela MySQL. | R6, Q10 | «gravar» fora da lista de verbos; «tabela» e «MySQL» impõem o projeto |
-| RF-08 – O software DEVE permitir excluir jogos. | Q5 (b) | Entra em par com o RF-09 |
-| RF-09 – O software não DEVE permitir excluir jogos. | Q5 (b) | Contradiz o RF-08; o par só segue adiante com registro de resolução |
+| RF3 – O software deverá ser amigável e permitir cadastrar jogos e plataformas. | N1, R1, R2, R3, R6, Q4 | ID com um só dígito e sem três dígitos; não usa «DEVE»; contém «amigável» e «e»; «deverá» e «ser» fora das listas |
+| RF013 – O software DEVE permitir o registro de nossas resenhas. | R5, R6, Q5 | Possessivo «nossas»; «resenhas» é termo remetido ao glossário (o termo é «review») |
+| RF014 – O software DEVE gravar jogos em tabela MySQL. | R6, Q10 | «gravar» fora da lista de verbos; «tabela» e «MySQL» impõem o projeto |
+| RNF003 – O software DEVE exibir erro em até 5 segundos se o banco falhar. | R4 | 13 palavras (limite 12). Reescrita sugerida: «O software DEVE exibir erro em 5 segundos se o banco falhar.» |
+| RF015 – O software DEVE permitir excluir jogos. | Q5 (b) | Entra em par com o RF016 |
+| RF016 – O software não DEVE permitir excluir jogos. | Q5 (b) | Contradiz o RF015; o par só segue adiante com registro de resolução |
 
 ## 9. Referência e origem das regras
 
@@ -192,12 +200,12 @@ Todo termo usado nas descrições dos requisitos está aqui (R6). Quando um conc
 
 | Termo | Definição | Não usar |
 |---|---|---|
-| Software | O sistema web GameTrack | sistema, aplicação, site, GameTrack |
+| Software | O sistema GameTrack | sistema, aplicação, site, GameTrack |
 | Usuário | Pessoa que usa o software e é dona de uma biblioteca | jogador, gamer, cliente |
 | Conta | Identificação do usuário no software | perfil, login |
 | Senha | Segredo que protege a conta | — |
-| Jogo | Título de videogame guardado na biblioteca | título, game |
-| Biblioteca | Conjunto de todos os jogos de um usuário, de todas as plataformas | coleção, acervo |
+| Jogo | Videogame guardado no catálogo e nas bibliotecas | game |
+| Biblioteca | Conjunto de todos os itens de um usuário, de todas as plataformas | coleção, acervo |
 | Plataforma | Console ou computador em que o jogo é jogado | console |
 | Gênero | Classificação do jogo por estilo | estilo, tipo |
 | Categoria | Grupo de jogos criado pelo próprio usuário | lista, pasta |
@@ -206,14 +214,34 @@ Todo termo usado nas descrições dos requisitos está aqui (R6). Quando um conc
 | Review | Texto que o usuário escreve sobre um jogo concluído | resenha, crítica, comentário |
 | Nota | Valor de 1 a 5 estrelas dado a um jogo concluído | avaliação, pontuação |
 | Tempo jogado | Total de tempo que o usuário dedicou a um jogo | horas jogadas |
-| Cadastro | Inclusão de um jogo, de uma categoria ou de uma conta no software | inclusão, adição |
+| Cadastro | Inclusão de um jogo no catálogo, de um item na biblioteca, de uma categoria ou de uma conta no software | inclusão, adição |
 | Registro | Inclusão de review, nota ou tempo jogado de um jogo | lançamento |
 | Consulta | Exibição de dados já guardados | busca, pesquisa |
 | Alteração | Mudança de dados já guardados | edição, atualização |
 | Exclusão | Remoção de dados guardados | remoção |
 | Navegador | Programa usado pelo usuário para acessar o software | browser |
+| Catálogo | Conjunto de todos os jogos cadastrados no software, compartilhado por todos os usuários | base global, banco global |
+| Administrador | Usuário da equipe do software, único com permissão para cadastrar, alterar e excluir jogos do catálogo | admin, gestor, moderador |
+| Apelido | Nome único escolhido pelo usuário para identificar a própria conta | nick, username |
+| Credenciais | Apelido e senha de uma conta | dados de acesso |
+| Título | Nome pelo qual um jogo é conhecido | — |
+| Desenvolvedora | Empresa que criou o jogo | estúdio, produtora, publisher |
+| Ano | Ano de lançamento do jogo | data de lançamento |
+| Dados do jogo | Título, gênero, desenvolvedora e ano de um jogo | metadados, atributos |
+| Item | Vínculo entre um usuário e um jogo do catálogo, guardado na biblioteca do usuário, com plataforma, status, tempo jogado e nota | ItemBiblioteca, entrada |
+| Métricas do item | Tempo jogado e nota de um item | estatísticas |
+| Operação | Caso de uso de cadastro, alteração ou exclusão executado pelo usuário ou pelo administrador | ação, tarefa |
+| Gravação | Salvamento dos dados de uma operação no banco | salvamento |
+| Resultado | Mensagem de sucesso ou de erro exibida ao fim de uma operação | retorno, feedback |
+| Erro | Mensagem que informa a falha de uma operação | falha, exceção |
+| Banco | Repositório em que o software guarda os dados; só aparece em RNF | banco de dados, base de dados |
+| Sessão | Período entre a autenticação do usuário e o seu encerramento | — |
+| Uso | Interação do usuário com o software, por clique ou digitação | utilização |
+| Hash | Código irreversível gerado a partir da senha e guardado no lugar dela | criptografia |
 
 O termo «Situação» é reservado ao atributo do requisito (seção 3). Para o estado de conclusão de um jogo usa-se «Status».
+
+**Plural:** acrescentar «s» ou «es» ao termo do glossário. Exceção: «item» tem plural «itens».
 
 ## Apêndice B – Listas fechadas
 
@@ -225,17 +253,17 @@ O termo «Situação» é reservado ao atributo do requisito (seção 3). Para o
 
 ### B.2 Verbos permitidos (R6)
 
-permitir, exigir, impedir, rejeitar, bloquear, exibir, listar, informar, registrar, cadastrar, consultar, alterar, excluir, criar, aplicar, atribuir, escrever, organizar, filtrar, agrupar, ordenar, calcular, somar, validar, autenticar, armazenar, responder, funcionar.
+permitir, exigir, impedir, rejeitar, bloquear, exibir, listar, informar, registrar, cadastrar, consultar, alterar, excluir, criar, aplicar, atribuir, escrever, organizar, filtrar, agrupar, ordenar, calcular, somar, validar, autenticar, armazenar, responder, funcionar, manter, concluir, encerrar, executar, falhar.
 
 ### B.3 Palavras de apoio livres (R6)
 
 - **Artigos:** o, a, os, as, um, uma, uns, umas.
 - **Preposições e contrações:** de, do, da, dos, das, em, no, na, nos, nas, para, por, com, sem, até, ao, à, entre, sobre.
-- **Outras:** não, que, cada, todo, toda, todos, todas, mesmo, mesma, diferente.
-- **Números e unidades:** algarismos, segundo, segundos, minuto, minutos, caractere, caracteres, estrela, estrelas.
+- **Outras:** não, que, cada, todo, toda, todos, todas, mesmo, mesma, diferente, se, após.
+- **Números e unidades:** algarismos, segundo, segundos, minuto, minutos, caractere, caracteres, estrela, estrelas, clique, cliques.
 - **Limites:** máximo e mínimo, somente com um número na mesma frase.
-- **Nomes das tags:** Concluído, Sendo Jogado, Abandonado, Platinado.
-- **Padrões ou produtos externos (somente em RNF, Q4):** Google Chrome, Mozilla Firefox, Microsoft Edge.
+- **Nomes das tags:** Backlog, Concluído, Sendo Jogado, Abandonado, Platinado.
+- **Padrões ou produtos externos (somente em RNF, Q4):** Google Chrome, Mozilla Firefox, Microsoft Edge, Java 25, MySQL 9.7 LTS, bcrypt.
 
 ### B.4 Termos de estrutura de projeto proibidos (Q10)
 
@@ -258,4 +286,4 @@ Cada necessidade precisa de ao menos um RF. Elas foram tiradas das funcionalidad
 | NEC-05 | Aplicar tags de status aos jogos | README, seção 1.3 |
 | NEC-06 | Escrever reviews e dar notas de 1 a 5 estrelas a jogos concluídos | README, seção 1.3 |
 | NEC-07 | Registrar o tempo jogado em cada jogo | README, seção 1.3 |
-| NEC-08 | Identificar o usuário para manter sua biblioteca individual | Equipe (a confirmar) |
+| NEC-08 | Identificar o usuário para manter sua biblioteca individual | Equipe; modelo base (tabela de usuários) |
