@@ -1,0 +1,328 @@
+package gametrack.front.view;
+
+import gametrack.front.cliente.JogoCliente;
+import gametrack.front.componentes.BotaoArredondado;
+import gametrack.front.componentes.BotaoLink;
+import gametrack.front.componentes.CaixaOpcoes;
+import gametrack.front.componentes.CampoTextoComDica;
+import gametrack.front.componentes.ModeloTabelaJogos;
+import gametrack.front.componentes.PainelArredondado;
+import gametrack.front.componentes.TabelaJogos;
+import gametrack.front.componentes.Tema;
+import gametrack.front.dto.FiltroJogoDTO;
+import gametrack.front.dto.JogoDTO;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingWorker;
+
+/**
+ * Tela I_CatalogoLista: lista os jogos do catálogo e permite filtrar por título, gênero,
+ * desenvolvedora e ano (RF004), no layout do protótipo do Figma.
+ * A tela só mostra dados; a busca é feita pelo {@link JogoCliente}, em segundo plano,
+ * para a janela não travar.
+ */
+public class CatalogoListaView extends JPanel {
+
+    private static final String TITULO_TELA = "Catálogo de jogos";
+    private static final String SUBTITULO_TELA =
+            "Encontre seu próximo jogo. Explore por título, gênero ou estúdio.";
+    private static final String MENSAGEM_LISTA_VAZIA = "Nenhum jogo encontrado.";
+    private static final String TITULO_ERRO = "Erro";
+    private static final String PADRAO_GENERO = "Todos os gêneros";
+    private static final String PADRAO_DESENVOLVEDORA = "Todas";
+    private static final String PADRAO_ANO = "Todos";
+    private static final int MARGEM = 24;
+    private static final int ESPACO = 16;
+    private static final int ESPACO_PEQUENO = 6;
+    private static final int ALTURA_CAMPO = 35;
+    private static final int LARGURA_TITULO = 175;
+    private static final int LARGURA_GENERO = 185;
+    private static final int LARGURA_DESENVOLVEDORA = 165;
+    private static final int LARGURA_ANO = 100;
+    private static final float TAMANHO_TITULO = 26f;
+    private static final float TAMANHO_TEXTO = 13f;
+    private static final float TAMANHO_LEGENDA = 12f;
+
+    private final JogoCliente cliente;
+    private final ModeloTabelaJogos modeloTabela = new ModeloTabelaJogos();
+    private final CampoTextoComDica campoTitulo = new CampoTextoComDica("Buscar por título");
+    private final CaixaOpcoes campoGenero = new CaixaOpcoes();
+    private final CaixaOpcoes campoDesenvolvedora = new CaixaOpcoes();
+    private final CaixaOpcoes campoAno = new CaixaOpcoes();
+    private final JLabel contagem = criarRotulo(" ", Font.BOLD, TAMANHO_TEXTO, Tema.TEXTO);
+    private final JLabel rodapeEsquerdo =
+            criarRotulo(" ", Font.PLAIN, TAMANHO_LEGENDA, Tema.TEXTO_SECUNDARIO);
+    private final JLabel rodapeDireito =
+            criarRotulo(" ", Font.PLAIN, TAMANHO_LEGENDA, Tema.TEXTO_SECUNDARIO);
+    private final BotaoArredondado botaoBiblioteca =
+            new BotaoArredondado("Minha biblioteca", Tema.FUNDO_BOTAO_SECUNDARIO);
+    private final TabelaJogos tabela = new TabelaJogos(modeloTabela);
+    private int totalCatalogo;
+
+    /**
+     * Cria a tela e já carrega todos os jogos do catálogo.
+     *
+     * @param cliente acesso ao catálogo, no servidor ou em memória
+     */
+    public CatalogoListaView(JogoCliente cliente) {
+        this.cliente = cliente;
+        setBackground(Tema.FUNDO_JANELA);
+        setLayout(new BorderLayout(0, ESPACO));
+        setBorder(BorderFactory.createEmptyBorder(MARGEM, MARGEM, MARGEM, MARGEM));
+        add(criarCabecalho(), BorderLayout.NORTH);
+        add(criarCorpo(), BorderLayout.CENTER);
+        add(criarRodape(), BorderLayout.SOUTH);
+        definirOpcoesPadrao();
+        carregarJogos(FiltroJogoDTO.semFiltro());
+    }
+
+    /**
+     * Define o que acontece ao clicar em "Minha biblioteca".
+     *
+     * @param acao ação a executar
+     */
+    public void definirAoAbrirBiblioteca(Runnable acao) {
+        botaoBiblioteca.addActionListener(evento -> acao.run());
+    }
+
+    /**
+     * Define o que acontece ao clicar em "Ver detalhes" de um jogo.
+     *
+     * @param acao recebe o jogo da linha clicada
+     */
+    public void definirAoVerDetalhes(java.util.function.Consumer<JogoDTO> acao) {
+        tabela.definirAoVerDetalhes(acao);
+    }
+
+    private JPanel criarCabecalho() {
+        JPanel cabecalho = criarPainelTransparente(new BorderLayout());
+        JPanel botao = criarPainelTransparente(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        botao.add(botaoBiblioteca);
+        cabecalho.add(criarTextosDoCabecalho(), BorderLayout.WEST);
+        cabecalho.add(botao, BorderLayout.EAST);
+        return cabecalho;
+    }
+
+    private JPanel criarTextosDoCabecalho() {
+        JPanel textos = criarPainelTransparente(null);
+        textos.setLayout(new BoxLayout(textos, BoxLayout.Y_AXIS));
+        textos.add(criarRotulo(TITULO_TELA, Font.BOLD, TAMANHO_TITULO, Tema.TEXTO));
+        textos.add(Box.createVerticalStrut(ESPACO_PEQUENO));
+        textos.add(criarRotulo(SUBTITULO_TELA, Font.PLAIN, TAMANHO_TEXTO,
+                Tema.TEXTO_SECUNDARIO));
+        return textos;
+    }
+
+    private JPanel criarCorpo() {
+        JPanel corpo = criarPainelTransparente(new BorderLayout(0, ESPACO));
+        JPanel topo = criarPainelTransparente(new BorderLayout(0, ESPACO));
+        topo.add(criarCartaoFiltros(), BorderLayout.CENTER);
+        topo.add(contagem, BorderLayout.SOUTH);
+        corpo.add(topo, BorderLayout.NORTH);
+        corpo.add(criarCartaoTabela(), BorderLayout.CENTER);
+        return corpo;
+    }
+
+    private PainelArredondado criarCartaoFiltros() {
+        PainelArredondado cartao = new PainelArredondado(Tema.FUNDO_CARTAO, Tema.BORDA);
+        cartao.setBorder(BorderFactory.createEmptyBorder(ESPACO, ESPACO, ESPACO, ESPACO));
+        cartao.add(criarTituloDosFiltros(), BorderLayout.NORTH);
+        cartao.add(criarGradeDeFiltros(), BorderLayout.CENTER);
+        return cartao;
+    }
+
+    private JPanel criarTituloDosFiltros() {
+        JPanel linha = criarPainelTransparente(new BorderLayout());
+        BotaoLink limpar = new BotaoLink("Limpar filtros");
+        limpar.addActionListener(evento -> limparFiltros());
+        linha.setBorder(BorderFactory.createEmptyBorder(0, 0, ESPACO, 0));
+        linha.add(criarRotulo("Filtrar jogos", Font.BOLD, TAMANHO_TEXTO, Tema.TEXTO),
+                BorderLayout.WEST);
+        linha.add(limpar, BorderLayout.EAST);
+        return linha;
+    }
+
+    private JPanel criarGradeDeFiltros() {
+        JPanel grade = criarPainelTransparente(new GridBagLayout());
+        campoTitulo.addActionListener(evento -> aplicarFiltros());
+        adicionarColuna(grade, 0, new ColunaFiltro("Título", campoTitulo, LARGURA_TITULO, 3.2));
+        adicionarColuna(grade, 1, new ColunaFiltro("Gênero", campoGenero, LARGURA_GENERO, 2.4));
+        adicionarColuna(grade, 2, new ColunaFiltro("Desenvolvedora", campoDesenvolvedora,
+                LARGURA_DESENVOLVEDORA, 2.8));
+        adicionarColuna(grade, 3, new ColunaFiltro("Ano", campoAno, LARGURA_ANO, 1.6));
+        adicionarBotaoFiltrar(grade);
+        return grade;
+    }
+
+    private void adicionarColuna(JPanel grade, int posicao, ColunaFiltro coluna) {
+        GridBagConstraints rotulo = restricao(posicao, 0, coluna.peso());
+        rotulo.insets = new Insets(0, 0, ESPACO_PEQUENO, ESPACO);
+        grade.add(criarRotulo(coluna.rotulo(), Font.PLAIN, TAMANHO_LEGENDA,
+                Tema.TEXTO_SECUNDARIO), rotulo);
+        coluna.campo().setPreferredSize(new Dimension(coluna.largura(), ALTURA_CAMPO));
+        GridBagConstraints campo = restricao(posicao, 1, coluna.peso());
+        campo.insets = new Insets(0, 0, 0, ESPACO);
+        grade.add(coluna.campo(), campo);
+    }
+
+    private void adicionarBotaoFiltrar(JPanel grade) {
+        BotaoArredondado botao = new BotaoArredondado("Filtrar", Tema.ROXO);
+        botao.addActionListener(evento -> aplicarFiltros());
+        GridBagConstraints restricao = restricao(4, 1, 0);
+        restricao.fill = GridBagConstraints.VERTICAL;
+        grade.add(botao, restricao);
+    }
+
+    private GridBagConstraints restricao(int coluna, int linha, double peso) {
+        GridBagConstraints restricao = new GridBagConstraints();
+        restricao.gridx = coluna;
+        restricao.gridy = linha;
+        restricao.weightx = peso;
+        restricao.anchor = GridBagConstraints.WEST;
+        restricao.fill = GridBagConstraints.HORIZONTAL;
+        return restricao;
+    }
+
+    private PainelArredondado criarCartaoTabela() {
+        PainelArredondado cartao = new PainelArredondado(Tema.LINHA_ESCURA, Tema.BORDA);
+        cartao.add(tabela.criarPainelRolagem(), BorderLayout.CENTER);
+        return cartao;
+    }
+
+    private JPanel criarRodape() {
+        JPanel rodape = criarPainelTransparente(new BorderLayout());
+        rodape.add(rodapeEsquerdo, BorderLayout.WEST);
+        rodape.add(rodapeDireito, BorderLayout.EAST);
+        return rodape;
+    }
+
+    private void definirOpcoesPadrao() {
+        campoGenero.definirOpcoes(PADRAO_GENERO, List.of());
+        campoDesenvolvedora.definirOpcoes(PADRAO_DESENVOLVEDORA, List.of());
+        campoAno.definirOpcoes(PADRAO_ANO, List.of());
+    }
+
+    private void aplicarFiltros() {
+        carregarJogos(montarFiltro());
+    }
+
+    private void limparFiltros() {
+        campoTitulo.setText("");
+        campoGenero.setSelectedIndex(0);
+        campoDesenvolvedora.setSelectedIndex(0);
+        campoAno.setSelectedIndex(0);
+        carregarJogos(FiltroJogoDTO.semFiltro());
+    }
+
+    private FiltroJogoDTO montarFiltro() {
+        String titulo = campoTitulo.getText().trim();
+        return new FiltroJogoDTO(titulo.isEmpty() ? null : titulo,
+                opcaoEscolhida(campoGenero),
+                opcaoEscolhida(campoDesenvolvedora),
+                opcaoEscolhida(campoAno));
+    }
+
+    private String opcaoEscolhida(CaixaOpcoes caixa) {
+        return caixa.getSelectedIndex() <= 0 ? null : (String) caixa.getSelectedItem();
+    }
+
+    private void carregarJogos(FiltroJogoDTO filtro) {
+        new BuscaJogos(filtro).execute();
+    }
+
+    private void exibirJogos(List<JogoDTO> jogos, FiltroJogoDTO filtro) {
+        modeloTabela.definirJogos(jogos);
+        if (FiltroJogoDTO.semFiltro().equals(filtro)) {
+            atualizarCatalogoCompleto(jogos);
+        }
+        atualizarTextos(jogos.size());
+    }
+
+    private void atualizarCatalogoCompleto(List<JogoDTO> jogos) {
+        totalCatalogo = jogos.size();
+        campoGenero.definirOpcoes(PADRAO_GENERO, valoresUnicos(jogos, JogoDTO::genero));
+        campoDesenvolvedora.definirOpcoes(PADRAO_DESENVOLVEDORA,
+                valoresUnicos(jogos, JogoDTO::desenvolvedora));
+        campoAno.definirOpcoes(PADRAO_ANO,
+                valoresUnicos(jogos, jogo -> String.valueOf(jogo.ano())));
+    }
+
+    private List<String> valoresUnicos(List<JogoDTO> jogos, Function<JogoDTO, String> campo) {
+        return jogos.stream().map(campo).distinct().sorted().toList();
+    }
+
+    private void atualizarTextos(int exibidos) {
+        contagem.setText(exibidos == 0 ? MENSAGEM_LISTA_VAZIA : textoContagem(exibidos));
+        rodapeEsquerdo.setText(exibidos == totalCatalogo
+                ? "Exibindo todos os " + totalCatalogo + " jogos do catálogo"
+                : "Exibindo " + exibidos + " dos " + totalCatalogo + " jogos do catálogo");
+        rodapeDireito.setText(exibidos + " de " + totalCatalogo);
+    }
+
+    private String textoContagem(int exibidos) {
+        return exibidos == 1 ? "1 jogo encontrado" : exibidos + " jogos encontrados";
+    }
+
+    private void exibirErro(String texto) {
+        JOptionPane.showMessageDialog(this, texto, TITULO_ERRO, JOptionPane.ERROR_MESSAGE);
+    }
+
+    private static JLabel criarRotulo(String texto, int estilo, float tamanho, Color cor) {
+        JLabel rotulo = new JLabel(texto);
+        rotulo.setFont(Tema.fonte(estilo, tamanho));
+        rotulo.setForeground(cor);
+        return rotulo;
+    }
+
+    private static JPanel criarPainelTransparente(java.awt.LayoutManager layout) {
+        JPanel painel = new JPanel(layout);
+        painel.setOpaque(false);
+        return painel;
+    }
+
+    /** Uma coluna da área de filtros: rótulo, campo, largura mínima e peso na largura. */
+    private record ColunaFiltro(String rotulo, JComponent campo, int largura, double peso) {
+    }
+
+    /** Busca os jogos fora da thread da interface e exibe o resultado ao terminar. */
+    private class BuscaJogos extends SwingWorker<List<JogoDTO>, Void> {
+
+        private final FiltroJogoDTO filtro;
+
+        BuscaJogos(FiltroJogoDTO filtro) {
+            this.filtro = filtro;
+        }
+
+        @Override
+        protected List<JogoDTO> doInBackground() {
+            return cliente.listar(filtro);
+        }
+
+        @Override
+        protected void done() {
+            try {
+                exibirJogos(get(), filtro);
+            } catch (ExecutionException e) {
+                exibirErro(e.getCause().getMessage());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+}
