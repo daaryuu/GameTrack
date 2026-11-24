@@ -1,16 +1,12 @@
-# Compiled class file
+# ==============================================================
+# .gitignore do GameTrack
+# Regra: só entra no repositório o que foi escrito pela equipe
+# (código, documentação, scripts). Arquivos gerados, de máquina
+# ou secretos ficam de fora.
+# ==============================================================
+
+# --- Java: arquivos compilados e pacotes ---
 *.class
-
-# Log file
-*.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
 *.jar
 *.war
 *.nar
@@ -19,6 +15,51 @@
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# --- Java: saída de build (Maven e Gradle) ---
+target/
+build/
+out/
+bin/
+.gradle/
+
+# --- Logs e falhas da JVM ---
+*.log
 hs_err_pid*
 replay_pid*
+
+# --- IDE: VSCode (compartilhamos só as configurações do projeto) ---
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# --- IDE: arquivos gerados pelas extensões Java e por outras IDEs ---
+.classpath
+.project
+.settings/
+.idea/
+*.iml
+*.ctxt
+
+# --- Sistema operacional ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Documentos: arquivos temporários do Word e do LibreOffice ---
+~$*.docx
+~$*.xlsx
+.~lock.*#
+*.tmp
+
+# --- Segredos e configuração local (senha do banco, etc.) ---
+.env
+config.properties
+*.pem
+*.key
+# O modelo de configuração, sem senhas, é versionado:
+!config.example.properties
+
+# --- Banco de dados: cópias e dumps locais ---
+# (os scripts de criação, em sql/*.sql, são versionados)
+*.dump
+*.bak
