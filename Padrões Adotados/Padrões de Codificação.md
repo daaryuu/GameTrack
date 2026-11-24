@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| **Versão** | 1.0 |
-| **Aplica-se a** | Todo código Java do projeto (`src/` e `test/`), pela equipe inteira |
+| **Versão** | 1.1 |
+| **Aplica-se a** | Todo código Java do projeto (módulos `back` e `front`, em `src/main` e `src/test`), pela equipe inteira |
 | **Base** | Convenções da linguagem Java, princípios SOLID e livro *Código Limpo* (Clean Code) |
 
 ## 1. Objetivo

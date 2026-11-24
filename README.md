@@ -35,12 +35,18 @@ _Em construção_
 
 ### 3.1 Pré-requisitos
 - JDK 25
+- Maven 3.9 ou superior
 - MySQL 9.7 LTS
-- VSCode, com as extensões para Java
+- VSCode, com a extensão Extension Pack for Java
 
-_As instruções de configuração do banco e de execução serão adicionadas junto com o código._
+### 3.2 Configuração do ambiente
+1. Crie o banco e as tabelas: `mysql -u <usuario> -p < sql/01_criar_tabelas.sql`.
+2. Copie `back/src/main/resources/config.example.properties` para `back/src/main/resources/config.properties` e preencha o usuário e a senha do seu MySQL. O arquivo `config.properties` é ignorado pelo Git.
+3. Compile e rode os testes na raiz do projeto: `mvn clean package`.
 
-### 3.2 Como contribuir
+_As instruções de execução do servidor e da interface serão adicionadas junto com o código._
+
+### 3.3 Como contribuir
 O trabalho em equipe segue os padrões definidos na pasta [`Padrões Adotados`](Padrões%20Adotados):
 
 | Assunto | Resumo | Documento |
@@ -50,7 +56,7 @@ O trabalho em equipe segue os padrões definidos na pasta [`Padrões Adotados`](
 | Código | 10 regras de codificação: notação de nomes, Javadoc, métodos pequenos, SOLID, exceções, SQL parametrizado, entre outras. | [Padrões de Codificação](Padrões%20Adotados/Padrões%20de%20Codificação.md) |
 | Requisitos | Regras de verificação e análise aplicadas a cada requisito. | [Regras de Verificação e Análise de Requisitos](Padrões%20Adotados/Regras%20de%20Verificação%20e%20Análise%20de%20Requisitos.md) |
 
-### 3.3 Acompanhamento das tarefas
+### 3.4 Acompanhamento das tarefas
 As tarefas estão no quadro Kanban do projeto, na aba **Projects** do repositório. Cada tarefa é uma issue cujo nome começa com o código do requisito (por exemplo, `[RF003] Cadastrar jogo no catálogo`). A tarefa vai para **Desenvolvendo** ao ser iniciada, passa por **Teste de Sistema** e termina em **Finalizado**.
 
 ## 4. Tecnologias
@@ -69,23 +75,34 @@ As tarefas estão no quadro Kanban do projeto, na aba **Projects** do repositór
 
 ### 5.1 Estrutura de pastas
 
+O projeto é um Maven com dois módulos, `back` (servidor Java) e `front` (interface Swing).
+
 ```
 GameTrack/
 ├── README.md
 ├── .gitignore
+├── pom.xml                        Projeto Maven pai
+├── back/                          Servidor Java
+│   ├── pom.xml
+│   └── src/
+│       ├── main/java/gametrack/back/   routes, controllers, services, repositories,
+│       │                               model, config, seguranca
+│       ├── main/resources/             config.example.properties
+│       └── test/java/gametrack/back/   Testes
+├── front/                         Interface Swing
+│   ├── pom.xml
+│   └── src/
+│       ├── main/java/gametrack/front/  view, componentes, cliente, dto
+│       └── test/java/gametrack/front/  Testes
+├── sql/                           Scripts do banco de dados (MySQL)
 ├── docs/
 │   └── diagramas/                 Diagramas de classes, de pacotes e de sequência
 ├── Requisitos/                    Documento de requisitos
-├── Padrões Adotados/              Regras e padrões da equipe
-│   └── registros/                 Revisões de requisitos, por data
-├── src/                           Código-fonte (a ser criado)
-│   ├── front/                     Interface Swing
-│   └── back/                      Servidor Java
-├── sql/                           Scripts do banco de dados (a ser criado)
-└── test/                          Testes unitários e de validação (a ser criado)
+└── Padrões Adotados/              Regras e padrões da equipe
+    └── registros/                 Revisões de requisitos, por data
 ```
 
-Os pacotes internos de `src/front` e `src/back` estão no diagrama de pacotes (seção 5.3). A documentação completa do sistema está em [`Requisitos/Documento_de_Requisitos_GameTrack.docx`](Requisitos/Documento_de_Requisitos_GameTrack.docx), com os requisitos funcionais e não funcionais, a rastreabilidade entre telas e requisitos, o protótipo no Figma e o dicionário de dados.
+Os pacotes internos de cada módulo estão no diagrama de pacotes (seção 5.3). A documentação completa do sistema está em [`Requisitos/Documento_de_Requisitos_GameTrack.docx`](Requisitos/Documento_de_Requisitos_GameTrack.docx), com os requisitos funcionais e não funcionais, a rastreabilidade entre telas e requisitos, o protótipo no Figma e o dicionário de dados.
 
 ### 5.2 Diagrama de classes do domínio
 
