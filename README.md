@@ -41,4 +41,15 @@ _Em construção_
 
 ## 5. Organização do Projeto
 
-_Em construção_
+### 5.1 Diagrama de classes do domínio
+
+Principais classes do domínio, com atributos, relacionamentos e multiplicidades.
+
+<img width="2014" height="1347" alt="image" src="https://github.com/user-attachments/assets/3bee94e8-d5ac-4aa6-b34d-7ff37a59b966" />
+
+### 5.2 Diagrama de pacotes
+
+Organização das pastas do projeto e dependências entre os pacotes do front (Swing) e do back (Java).
+
+<img width="1657" height="1764" alt="image" src="https://github.com/user-attachments/assets/97d131e0-9e76-4e34-bf02-8011b6ed00a2" />
+
