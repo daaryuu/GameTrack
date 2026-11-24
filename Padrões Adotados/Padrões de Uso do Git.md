@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Versão** | 1.0 |
+| **Versão** | 1.1 |
 | **Aplica-se a** | Todo o repositório `GameTrack`, por todos os integrantes da equipe |
 
 ## 1. Objetivo
@@ -148,46 +148,55 @@ Closes #12
 
 ## 5. Organização de pastas
 
-A regra geral é: **código em `src/`, testes em `test/`, documentação nas demais pastas**. Cada tipo de arquivo tem um lugar só.
+A regra geral é: **código e testes dentro dos módulos `back` e `front`, scripts do banco em `sql/` e documentação nas demais pastas**. Cada tipo de arquivo tem um lugar só. O projeto é um Maven com dois módulos, um para cada integrante da dupla de desenvolvimento.
 
 ```
 GameTrack/
 ├── README.md                      Apresentação do projeto e instruções
 ├── .gitignore                     Arquivos que o Git ignora
+├── pom.xml                        Projeto Maven pai (liga os módulos back e front)
+├── back/                          Módulo do servidor Java
+│   ├── pom.xml
+│   └── src/
+│       ├── main/java/gametrack/back/
+│       │   ├── routes/
+│       │   ├── controllers/
+│       │   ├── services/
+│       │   ├── repositories/
+│       │   ├── model/
+│       │   ├── config/
+│       │   └── seguranca/
+│       ├── main/resources/        config.example.properties
+│       └── test/java/gametrack/back/   Testes, com a mesma estrutura de pacotes
+├── front/                         Módulo da interface Swing
+│   ├── pom.xml
+│   └── src/
+│       ├── main/java/gametrack/front/
+│       │   ├── view/
+│       │   ├── componentes/
+│       │   ├── cliente/
+│       │   └── dto/
+│       └── test/java/gametrack/front/  Testes, com a mesma estrutura de pacotes
+├── sql/                           Scripts de criação e carga do banco (MySQL)
 ├── docs/
 │   └── diagramas/
 │       ├── diagrama_de_classes.png
 │       ├── diagrama_de_pacotes.png
 │       └── sequencia/             Um diagrama por funcionalidade (RF003 a RF010)
 ├── Requisitos/                    Documento de requisitos
-├── Padrões Adotados/              Regras de verificação, padrões de Git e registros
-│   └── registros/                 Uma revisão de requisitos por data
-├── src/
-│   ├── front/                     Interface Swing
-│   │   ├── view/
-│   │   ├── componentes/
-│   │   ├── cliente/
-│   │   └── dto/
-│   └── back/                      Servidor Java
-│       ├── routes/
-│       ├── controllers/
-│       ├── services/
-│       ├── repositories/
-│       ├── model/
-│       ├── config/
-│       └── seguranca/
-├── sql/                           Scripts de criação e carga do banco (MySQL)
-└── test/                          Testes unitários e de validação, espelhando src/
+└── Padrões Adotados/              Regras de verificação, padrões de Git e registros
+    └── registros/                 Uma revisão de requisitos por data
 ```
 
 | Código | Regra |
 |---|---|
-| D1 | Código-fonte só em `src/`. As pastas `front` e `back` e os pacotes internos seguem o diagrama de pacotes. |
-| D2 | Testes só em `test/`, na mesma estrutura de pacotes do código testado. |
+| D1 | Código-fonte só em `back/src/main` e `front/src/main`. Os pacotes internos seguem o diagrama de pacotes. |
+| D2 | Testes só em `src/test` de cada módulo, na mesma estrutura de pacotes do código testado. |
 | D3 | Documentos (requisitos, regras, relatórios) ficam em `Requisitos/` e `Padrões Adotados/`. Imagens e diagramas ficam em `docs/diagramas/`. |
 | D4 | Scripts SQL ficam em `sql/`, numerados na ordem de execução (`01_criar_tabelas.sql`). |
 | D5 | Pastas novas têm nome em minúsculas, sem acentos nem espaços. As pastas `Requisitos` e `Padrões Adotados` já existem e mantêm o nome. |
 | D6 | Arquivos de imagem têm nome sem espaços nem acentos, para os links do README não quebrarem. |
+| D7 | Cada integrante trabalha, em regra, no seu módulo. Mudanças no `pom.xml` pai e nos dois contratos entre front e back (rotas e DTOs) são combinadas antes. |
 
 ## 6. Arquivo `.gitignore`
 
@@ -220,9 +229,9 @@ Exemplo da demonstração, com arquivos criados de propósito:
 
 | Arquivo | Resultado | Regra |
 |---|---|---|
-| `src/back/Main.java` | versionado | – |
-| `src/back/Main.class` | ignorado | `*.class` |
-| `target/app.jar` | ignorado | `target/` |
+| `back/src/main/java/.../Main.java` | versionado | – |
+| `back/target/classes/.../Main.class` | ignorado | `target/` e `*.class` |
+| `back/target/gametrack-back.jar` | ignorado | `target/` |
 | `.vscode/launch.json` | ignorado | `.vscode/*` |
 | `.vscode/settings.json` | versionado | exceção `!.vscode/settings.json` |
 | `config.properties` | ignorado | `config.properties` |
