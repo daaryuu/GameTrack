@@ -13,6 +13,7 @@ import gametrack.back.seguranca.BcryptCriptografiaSenha;
 import gametrack.back.seguranca.CriptografiaSenha;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -132,6 +133,11 @@ public class UsuarioServiceTest {
             }
 
             @Override
+            public Optional<Usuario> buscarPorApelido(String apelido) {
+                return Optional.empty();
+            }
+
+            @Override
             public Usuario inserir(Usuario usuario) {
                 throw new RegistroDuplicadoException(new RuntimeException("duplicado"));
             }
@@ -150,6 +156,11 @@ public class UsuarioServiceTest {
         @Override
         public boolean existePorApelido(String apelido) {
             return usuarios.stream().anyMatch(u -> u.getApelido().equals(apelido));
+        }
+
+        @Override
+        public Optional<Usuario> buscarPorApelido(String apelido) {
+            return Optional.empty();
         }
 
         @Override
