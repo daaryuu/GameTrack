@@ -1,5 +1,6 @@
 package gametrack.front.view;
 
+import gametrack.front.cliente.ConexaoHttp;
 import gametrack.front.cliente.UsuarioCliente;
 import gametrack.front.cliente.UsuarioClienteFalso;
 import gametrack.front.cliente.UsuarioClienteHttp;
@@ -28,7 +29,7 @@ public final class DemonstracaoCadastroConta {
      */
     public static void main(String[] args) {
         UsuarioCliente cliente = args.length > 0
-                ? new UsuarioClienteHttp(args[0]) : new UsuarioClienteFalso();
+                ? new UsuarioClienteHttp(new ConexaoHttp(args[0])) : new UsuarioClienteFalso();
         SwingUtilities.invokeLater(() -> abrirJanela(cliente));
     }
 

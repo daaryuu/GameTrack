@@ -21,10 +21,10 @@ public class JogoClienteHttp implements JogoCliente {
     /**
      * Cria o cliente.
      *
-     * @param urlBase endereço do servidor, como {@code http://localhost:8080}
+     * @param conexao conexão com o servidor, compartilhada entre os clientes
      */
-    public JogoClienteHttp(String urlBase) {
-        this.conexao = new ConexaoHttp(urlBase);
+    public JogoClienteHttp(ConexaoHttp conexao) {
+        this.conexao = conexao;
     }
 
     @Override

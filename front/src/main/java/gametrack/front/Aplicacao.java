@@ -1,5 +1,6 @@
 package gametrack.front;
 
+import gametrack.front.cliente.ConexaoHttp;
 import gametrack.front.cliente.JogoCliente;
 import gametrack.front.cliente.JogoClienteFalso;
 import gametrack.front.cliente.JogoClienteHttp;
@@ -37,7 +38,8 @@ public final class Aplicacao {
     }
 
     private static JogoCliente criarCliente(String[] args) {
-        return args.length > 0 ? new JogoClienteHttp(args[0]) : new JogoClienteFalso();
+        return args.length > 0
+                ? new JogoClienteHttp(new ConexaoHttp(args[0])) : new JogoClienteFalso();
     }
 
     private static void abrirJanela(JogoCliente cliente) {

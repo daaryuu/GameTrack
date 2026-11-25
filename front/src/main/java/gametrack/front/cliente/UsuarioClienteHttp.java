@@ -16,10 +16,10 @@ public class UsuarioClienteHttp implements UsuarioCliente {
     /**
      * Cria o cliente.
      *
-     * @param urlBase endereço do servidor, como {@code http://localhost:8080}
+     * @param conexao conexão com o servidor, compartilhada entre os clientes
      */
-    public UsuarioClienteHttp(String urlBase) {
-        this.conexao = new ConexaoHttp(urlBase);
+    public UsuarioClienteHttp(ConexaoHttp conexao) {
+        this.conexao = conexao;
     }
 
     @Override

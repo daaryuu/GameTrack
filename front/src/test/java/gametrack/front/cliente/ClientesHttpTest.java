@@ -2,12 +2,14 @@ package gametrack.front.cliente;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import gametrack.front.dto.CadastroUsuarioDTO;
+import gametrack.front.dto.CredenciaisDTO;
 import gametrack.front.dto.FiltroJogoDTO;
 import gametrack.front.dto.JogoDTO;
 import java.io.IOException;
@@ -23,18 +25,23 @@ import org.junit.jupiter.api.Test;
  * recebida e devolve a resposta preparada.
  *
  * @see RF001
+ * @see RF002
  * @see RF004
  */
 class ClientesHttpTest {
 
     private static final CadastroUsuarioDTO CADASTRO =
             new CadastroUsuarioDTO("joão", "senha1234");
+    private static final CredenciaisDTO CREDENCIAIS =
+            new CredenciaisDTO("joão", "senha1234");
     private static final JogoDTO PORTAL =
             new JogoDTO(5, "Portal 2", "Quebra-cabeça", "Valve", 2011);
 
     private HttpServer servidor;
     private UsuarioCliente usuarios;
+    private SessaoCliente sessoes;
     private JogoCliente jogos;
+    private volatile String credencialRecebida;
     private int status = 200;
     private String resposta = "";
     private volatile String requisicaoRecebida;
@@ -47,8 +54,10 @@ class ClientesHttpTest {
         servidor.createContext("/", this::responder);
         servidor.start();
         String url = "http://localhost:" + servidor.getAddress().getPort();
-        usuarios = new UsuarioClienteHttp(url);
-        jogos = new JogoClienteHttp(url);
+        ConexaoHttp conexao = new ConexaoHttp(url);
+        usuarios = new UsuarioClienteHttp(conexao);
+        sessoes = new SessaoClienteHttp(conexao);
+        jogos = new JogoClienteHttp(conexao);
     }
 
     @AfterEach
@@ -65,6 +74,42 @@ class ClientesHttpTest {
         assertEquals("POST /usuarios", requisicaoRecebida);
         assertEquals("application/json; charset=UTF-8", tipoRecebido);
         assertEquals(CADASTRO, new Gson().fromJson(corpoRecebido, CadastroUsuarioDTO.class));
+    }
+
+    @Test
+    void deveEnviarAsCredenciaisEUsarOTokenNasProximasRequisicoes() {
+        preparar(201, "{\"token\":\"abc123\"}");
+
+        sessoes.autenticar(CREDENCIAIS);
+
+        assertEquals("POST /sessoes", requisicaoRecebida);
+        assertEquals(CREDENCIAIS, new Gson().fromJson(corpoRecebido, CredenciaisDTO.class));
+        assertNull(credencialRecebida);
+        preparar(200, "[]");
+        jogos.listar(FiltroJogoDTO.semFiltro());
+        assertEquals("Bearer abc123", credencialRecebida);
+    }
+
+    @Test
+    void naoDeveEnviarTokenQuandoOLoginForRecusado() {
+        preparar(401, "{\"mensagem\":\"Apelido ou senha incorretos!\"}");
+
+        ErroServidorException erro = assertThrows(
+                ErroServidorException.class, () -> sessoes.autenticar(CREDENCIAIS));
+
+        assertEquals("Apelido ou senha incorretos!", erro.getMessage());
+        preparar(200, "[]");
+        jogos.listar(FiltroJogoDTO.semFiltro());
+        assertNull(credencialRecebida);
+    }
+
+    @Test
+    void deveRecusarLoginSemToken() {
+        for (String corpo : List.of("", "{}", "{\"token\":\"\"}")) {
+            preparar(201, corpo);
+
+            assertThrows(ErroServidorException.class, () -> sessoes.autenticar(CREDENCIAIS));
+        }
     }
 
     @Test
@@ -127,6 +172,7 @@ class ClientesHttpTest {
 
     private void responder(HttpExchange troca) throws IOException {
         requisicaoRecebida = troca.getRequestMethod() + " " + troca.getRequestURI();
+        credencialRecebida = troca.getRequestHeaders().getFirst("Authorization");
         tipoRecebido = troca.getRequestHeaders().getFirst("Content-Type");
         corpoRecebido = new String(
                 troca.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
