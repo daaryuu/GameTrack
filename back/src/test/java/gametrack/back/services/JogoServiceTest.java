@@ -1,7 +1,9 @@
 package gametrack.back.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import gametrack.back.config.Mensagens;
 import gametrack.back.model.FiltroJogoDTO;
@@ -20,6 +22,9 @@ import org.junit.jupiter.api.Test;
  */
 class JogoServiceTest {
 
+    private static final Jogo HOLLOW_KNIGHT =
+            new Jogo(1, "Hollow Knight", "Metroidvania", "Team Cherry", 2017);
+
     @Test
     void deveExigirUsuarioAutenticado() {
         JogoService service = new JogoService((t, g, d, a) -> List.of());
@@ -33,9 +38,7 @@ class JogoServiceTest {
 
     @Test
     void deveListarJogosFiltradosQuandoEncontrados() {
-        JogoRepository repoFake = (titulo, genero, dev, ano) -> List.of(
-                new Jogo(1, "Hollow Knight", "Metroidvania", "Team Cherry", 2017));
-        JogoService service = new JogoService(repoFake);
+        JogoService service = new JogoService((t, g, d, a) -> List.of(HOLLOW_KNIGHT));
 
         List<JogoDTO> resultado = service.listarCatalogo(
                 10, new FiltroJogoDTO("Hollow", null, null, "2017"));
@@ -45,14 +48,13 @@ class JogoServiceTest {
     }
 
     @Test
-    void deveLancarExcecaoQuandoNenhumJogoForEncontrado() {
+    void deveRetornarListaVaziaQuandoNenhumJogoForEncontrado() {
         JogoService service = new JogoService((t, g, d, a) -> List.of());
 
-        NegocioException excecao = assertThrows(
-                NegocioException.class,
-                () -> service.listarCatalogo(10, new FiltroJogoDTO("Inexistente", null, null, null)));
+        List<JogoDTO> resultado = service.listarCatalogo(
+                10, new FiltroJogoDTO("Inexistente", null, null, null));
 
-        assertEquals(Mensagens.NENHUM_JOGO_ENCONTRADO, excecao.getMessage());
+        assertTrue(resultado.isEmpty());
     }
 
     @Test
@@ -64,5 +66,35 @@ class JogoServiceTest {
                 () -> service.listarCatalogo(10, new FiltroJogoDTO(null, null, null, "abc")));
 
         assertEquals(Mensagens.ANO_FILTRO_INVALIDO, excecao.getMessage());
+    }
+
+    @Test
+    void deveTratarFiltroNuloComoListagemCompleta() {
+        Object[] recebido = new Object[4];
+        JogoRepository repositorio = (titulo, genero, desenvolvedora, ano) -> {
+            recebido[0] = titulo;
+            recebido[3] = ano;
+            return List.of(HOLLOW_KNIGHT);
+        };
+
+        List<JogoDTO> resultado = new JogoService(repositorio).listarCatalogo(10, null);
+
+        assertEquals(1, resultado.size());
+        assertNull(recebido[0]);
+        assertNull(recebido[3]);
+    }
+
+    @Test
+    void deveConverterAnoDoFiltroParaNumero() {
+        Object[] recebido = new Object[1];
+        JogoRepository repositorio = (titulo, genero, desenvolvedora, ano) -> {
+            recebido[0] = ano;
+            return List.of();
+        };
+
+        new JogoService(repositorio).listarCatalogo(
+                10, new FiltroJogoDTO(null, null, null, " 2011 "));
+
+        assertEquals(2011, recebido[0]);
     }
 }

@@ -24,9 +24,17 @@ public final class Mensagens {
     public static final String ERRO_COMUNICACAO_BANCO =
             "Erro ao comunicar com o banco de dados.";
 
-    public static final String NENHUM_JOGO_ENCONTRADO = "Nenhum jogo encontrado.";
     public static final String USUARIO_NAO_AUTENTICADO = "Usuário não autenticado.";
-    public static final String ANO_FILTRO_INVALIDO = "O ano informado no filtro deve ser numérico.";
+    public static final String ANO_FILTRO_INVALIDO =
+            "O ano informado no filtro deve ser numérico.";
+    public static final String PARAMETROS_INVALIDOS = "Os parâmetros da consulta são inválidos.";
+    public static final String METODO_NAO_PERMITIDO = "Método não permitido.";
+    public static final String ERRO_INESPERADO = "Erro inesperado no servidor.";
+    public static final String CONFIGURACAO_NAO_ENCONTRADA =
+            "Arquivo config.properties não encontrado. Copie config.example.properties para "
+                    + "config.properties e preencha os dados do banco.";
+    public static final String CONFIGURACAO_INCOMPLETA =
+            "Propriedade obrigatória ausente em config.properties: ";
 
     private Mensagens() {
     }
