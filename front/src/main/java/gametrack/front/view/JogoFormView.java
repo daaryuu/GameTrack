@@ -21,9 +21,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -32,24 +29,16 @@ import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 
 /**
- * Formulário de cadastro e de alteração de jogo do catálogo (I_JogoForm), usado só pelo
- * administrador.
+ * Formulário de cadastro de jogo no catálogo (I_JogoForm), usado só pelo administrador.
  *
  * @see RF003
- * @see RF005
  */
 public class JogoFormView extends JPanel {
 
-    private static final Textos CADASTRO = new Textos("Cadastrar jogo",
-            "Adicione um novo jogo ao catálogo com as informações abaixo.",
-            "O jogo será adicionado ao catálogo.", "Cadastrar jogo");
-    private static final Textos ALTERACAO = new Textos("Alterar jogo",
-            "Atualize as informações do jogo selecionado no catálogo.",
-            "As alterações serão aplicadas ao catálogo.", "Salvar alterações");
-    private static final String CARREGANDO = "Carregando os dados do jogo...";
+    private static final String DICA_RODAPE = "O jogo será adicionado ao catálogo.";
     private static final String DADOS_NAO_INFORMADOS = "Informe todos os dados do jogo!";
     private static final String ANO_INVALIDO = "O ano de lançamento deve ser um número!";
-    private static final String MENSAGEM_ERRO = "Erro inesperado!";
+    private static final String MENSAGEM_ERRO = "Erro inesperado ao cadastrar o jogo!";
     private static final String PADRAO_GENERO = "Selecione o gênero";
     private static final List<String> GENEROS = List.of(
             "Ação", "Aventura", "Corrida", "Esporte", "Estratégia", "FPS", "Luta",
@@ -73,66 +62,41 @@ public class JogoFormView extends JPanel {
     private final BotaoLink linkVoltar = new BotaoLink("Voltar ao catálogo");
     private final BotaoArredondado botaoCancelar =
             new BotaoArredondado("Cancelar", Tema.FUNDO_BOTAO_SECUNDARIO);
-    private final Textos textos;
-    private final Integer jogoId;
-    private final BotaoArredondado botaoSalvar;
-    private final Rotulo mensagem;
-    private boolean prontoParaSalvar;
-    private Runnable aoSalvar = () -> { };
+    private final BotaoArredondado botaoCadastrar =
+            new BotaoArredondado("Cadastrar jogo", Tema.ROXO);
+    private final Rotulo mensagem = new Rotulo(DICA_RODAPE, Tema.TEXTO_SECUNDARIO);
+    private Runnable aoCadastrar = () -> { };
     private Runnable aoExpirarSessao = () -> { };
 
-    private JogoFormView(JogoCliente cliente, Textos textos, Integer jogoId) {
+    /**
+     * Monta a tela.
+     *
+     * @param cliente acesso ao catálogo, no servidor ou em memória
+     */
+    public JogoFormView(JogoCliente cliente) {
         super(new BorderLayout());
         this.cliente = cliente;
-        this.textos = textos;
-        this.jogoId = jogoId;
-        this.prontoParaSalvar = jogoId == null;
-        this.botaoSalvar = new BotaoArredondado(textos.botao(), Tema.ROXO);
-        this.mensagem = new Rotulo(textos.dica(), Tema.TEXTO_SECUNDARIO);
         setBackground(Tema.FUNDO_JANELA);
         setBorder(BorderFactory.createEmptyBorder(MARGEM, MARGEM, MARGEM, MARGEM));
         campoGenero.definirOpcoes(PADRAO_GENERO, GENEROS);
         add(criarConteudo(), BorderLayout.NORTH);
-        campoTitulo.addActionListener(evento -> salvar());
-        campoAno.addActionListener(evento -> salvar());
-        campoDesenvolvedora.addActionListener(evento -> salvar());
-        botaoSalvar.addActionListener(evento -> salvar());
+        campoTitulo.addActionListener(evento -> cadastrar());
+        campoAno.addActionListener(evento -> cadastrar());
+        campoDesenvolvedora.addActionListener(evento -> cadastrar());
+        botaoCadastrar.addActionListener(evento -> cadastrar());
     }
 
     /**
-     * Cria a tela vazia, para cadastrar um jogo.
-     *
-     * @param cliente acesso ao catálogo, no servidor ou em memória
-     * @return tela de cadastro
-     */
-    public static JogoFormView paraCadastro(JogoCliente cliente) {
-        return new JogoFormView(cliente, CADASTRO, null);
-    }
-
-    /**
-     * Cria a tela para alterar um jogo e carrega os dados atuais dele.
-     *
-     * @param cliente acesso ao catálogo, no servidor ou em memória
-     * @param jogoId identificador do jogo
-     * @return tela de alteração
-     */
-    public static JogoFormView paraAlteracao(JogoCliente cliente, int jogoId) {
-        JogoFormView formulario = new JogoFormView(cliente, ALTERACAO, jogoId);
-        formulario.carregar();
-        return formulario;
-    }
-
-    /**
-     * Define o que fazer depois que o jogo for salvo.
+     * Define o que fazer depois que o jogo for cadastrado.
      *
      * @param acao ação a executar, como voltar ao catálogo
      */
-    public void definirAoSalvar(Runnable acao) {
-        this.aoSalvar = acao;
+    public void definirAoCadastrar(Runnable acao) {
+        this.aoCadastrar = acao;
     }
 
     /**
-     * Define o que fazer quando o usuário desiste de salvar.
+     * Define o que fazer quando o usuário desiste do cadastro.
      *
      * @param acao ação a executar, como voltar ao catálogo
      */
@@ -168,9 +132,10 @@ public class JogoFormView extends JPanel {
         linkVoltar.setBorder(BorderFactory.createEmptyBorder());
         cabecalho.add(linkVoltar);
         cabecalho.add(Box.createVerticalStrut(ESPACO_PEQUENO));
-        cabecalho.add(new Rotulo(textos.titulo(), TAMANHO_TITULO));
+        cabecalho.add(new Rotulo("Cadastrar jogo", TAMANHO_TITULO));
         cabecalho.add(Box.createVerticalStrut(ESPACO_PEQUENO));
-        cabecalho.add(new Rotulo(textos.subtitulo(), Tema.TEXTO_SECUNDARIO));
+        cabecalho.add(new Rotulo("Adicione um novo jogo ao catálogo com as informações abaixo.",
+                Tema.TEXTO_SECUNDARIO));
         return cabecalho;
     }
 
@@ -232,34 +197,14 @@ public class JogoFormView extends JPanel {
         botoes.setOpaque(false);
         botoes.add(botaoCancelar);
         botoes.add(Box.createHorizontalStrut(ESPACO_PEQUENO));
-        botoes.add(botaoSalvar);
+        botoes.add(botaoCadastrar);
         rodape.add(mensagem, BorderLayout.WEST);
         rodape.add(botoes, BorderLayout.EAST);
         return rodape;
     }
 
-    private void carregar() {
-        executar(CARREGANDO, () -> cliente.buscarPorId(jogoId), this::preencher);
-    }
-
-    private void preencher(JogoDTO jogo) {
-        campoTitulo.setText(jogo.titulo());
-        campoGenero.definirOpcoes(PADRAO_GENERO, generosCom(jogo.genero()));
-        campoGenero.setSelectedItem(jogo.genero());
-        campoAno.setText(String.valueOf(jogo.ano()));
-        campoDesenvolvedora.setText(jogo.desenvolvedora());
-        prontoParaSalvar = true;
-        exibirMensagem(textos.dica(), Tema.TEXTO_SECUNDARIO);
-    }
-
-    private List<String> generosCom(String genero) {
-        // O banco aceita qualquer gênero, e o do jogo não pode ser trocado sem o usuário pedir.
-        return GENEROS.contains(genero) ? GENEROS
-                : Stream.concat(GENEROS.stream(), Stream.of(genero)).toList();
-    }
-
-    private void salvar() {
-        if (!botaoSalvar.isEnabled()) {
+    private void cadastrar() {
+        if (!botaoCadastrar.isEnabled()) {
             return;
         }
         if (temCampoVazio()) {
@@ -279,31 +224,20 @@ public class JogoFormView extends JPanel {
     }
 
     private JogoDTO montarJogo() {
-        return new JogoDTO(jogoId, campoTitulo.getText().trim(),
+        return new JogoDTO(null, campoTitulo.getText().trim(),
                 (String) campoGenero.getSelectedItem(),
                 campoDesenvolvedora.getText().trim(),
                 Integer.parseInt(campoAno.getText().trim()));
     }
 
     private void enviar(JogoDTO jogo) {
-        executar(textos.dica(), () -> {
-            if (jogoId == null) {
-                cliente.cadastrar(jogo);
-            } else {
-                cliente.alterar(jogo);
-            }
-            return jogo;
-        }, salvo -> aoSalvar.run());
-    }
-
-    private <T> void executar(String texto, Supplier<T> tarefa, Consumer<T> aoConcluir) {
-        exibirMensagem(texto, Tema.TEXTO_SECUNDARIO);
+        exibirMensagem(DICA_RODAPE, Tema.TEXTO_SECUNDARIO);
         habilitarAcoes(false);
-        new Tarefa<>(tarefa, aoConcluir).execute();
+        new EnvioJogo(jogo).execute();
     }
 
     private void habilitarAcoes(boolean habilitar) {
-        botaoSalvar.setEnabled(habilitar && prontoParaSalvar);
+        botaoCadastrar.setEnabled(habilitar);
         botaoCancelar.setEnabled(habilitar);
         linkVoltar.setEnabled(habilitar);
     }
@@ -322,36 +256,31 @@ public class JogoFormView extends JPanel {
         mensagem.setForeground(cor);
     }
 
-    /** Textos que mudam entre o cadastro e a alteração. */
-    private record Textos(String titulo, String subtitulo, String dica, String botao) {
-    }
+    /** Envia o jogo fora da thread da interface, para a tela não travar. */
+    private class EnvioJogo extends SwingWorker<Void, Void> {
 
-    /** Executa uma operação fora da thread da interface, para a tela não travar. */
-    private class Tarefa<T> extends SwingWorker<T, Void> {
+        private final JogoDTO jogo;
 
-        private final Supplier<T> operacao;
-        private final Consumer<T> aoConcluir;
-
-        Tarefa(Supplier<T> operacao, Consumer<T> aoConcluir) {
-            this.operacao = operacao;
-            this.aoConcluir = aoConcluir;
+        EnvioJogo(JogoDTO jogo) {
+            this.jogo = jogo;
         }
 
         @Override
-        protected T doInBackground() {
-            return operacao.get();
+        protected Void doInBackground() {
+            cliente.cadastrar(jogo);
+            return null;
         }
 
         @Override
         protected void done() {
+            habilitarAcoes(true);
             try {
-                aoConcluir.accept(get());
+                get();
+                aoCadastrar.run();
             } catch (ExecutionException e) {
                 tratarErro(e.getCause());
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-            } finally {
-                habilitarAcoes(true);
             }
         }
     }
