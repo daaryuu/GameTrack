@@ -14,12 +14,13 @@ import java.util.List;
 
 /**
  * Implementa as regras de negócio do catálogo de jogos. A consulta é aberta a todos os
- * usuários autenticados, e o cadastro é exclusivo do administrador.
+ * usuários autenticados, e o cadastro e a alteração são exclusivos do administrador.
  *
  * @see RF003
  * @see RF003.1
  * @see RF004
  * @see RF004.1
+ * @see RF005
  */
 public class JogoService {
 
@@ -71,11 +72,53 @@ public class JogoService {
      */
     public void cadastrar(Integer usuarioAutenticadoId, DadosJogoDTO dados) {
         validarAdministrador(usuarioAutenticadoId);
+        jogoRepository.inserir(montarJogo(null, dados));
+    }
+
+    /**
+     * Busca um jogo do catálogo.
+     *
+     * @param usuarioAutenticadoId identificador do usuário autenticado na sessão
+     * @param jogoId identificador do jogo
+     * @return dados do jogo
+     * @throws AutenticacaoException se não houver usuário autenticado
+     * @throws NaoEncontradoException se o jogo não existir
+     */
+    public JogoDTO buscarPorId(Integer usuarioAutenticadoId, int jogoId) {
+        validarUsuarioAutenticado(usuarioAutenticadoId);
+        return jogoRepository.buscarPorId(jogoId)
+                .map(JogoDTO::deEntidade)
+                .orElseThrow(this::jogoNaoEncontrado);
+    }
+
+    /**
+     * Altera os dados de um jogo do catálogo.
+     *
+     * @param usuarioAutenticadoId identificador do usuário autenticado na sessão
+     * @param jogoId identificador do jogo
+     * @param dados novos dados do jogo, todos obrigatórios como no cadastro
+     * @throws AutenticacaoException se não houver usuário autenticado
+     * @throws PermissaoException se o usuário não for administrador
+     * @throws NegocioException se algum dado faltar ou estiver fora dos limites
+     * @throws NaoEncontradoException se o jogo não existir
+     */
+    public void alterar(Integer usuarioAutenticadoId, int jogoId, DadosJogoDTO dados) {
+        validarAdministrador(usuarioAutenticadoId);
+        if (!jogoRepository.atualizar(montarJogo(jogoId, dados))) {
+            throw jogoNaoEncontrado();
+        }
+    }
+
+    private NaoEncontradoException jogoNaoEncontrado() {
+        return new NaoEncontradoException(Mensagens.JOGO_NAO_ENCONTRADO);
+    }
+
+    private Jogo montarJogo(Integer jogoId, DadosJogoDTO dados) {
         validarDadosInformados(dados);
-        Jogo jogo = new Jogo(null, dados.titulo().trim(), dados.genero().trim(),
+        Jogo jogo = new Jogo(jogoId, dados.titulo().trim(), dados.genero().trim(),
                 dados.desenvolvedora().trim(), dados.ano());
         validarLimites(jogo);
-        jogoRepository.inserir(jogo);
+        return jogo;
     }
 
     private void validarAdministrador(Integer usuarioAutenticadoId) {

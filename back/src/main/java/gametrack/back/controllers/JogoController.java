@@ -13,6 +13,7 @@ import java.util.List;
  * @see RF003
  * @see RF004
  * @see RF004.1
+ * @see RF005
  */
 public class JogoController {
 
@@ -48,5 +49,29 @@ public class JogoController {
     public String cadastrarJogo(Integer usuarioAutenticadoId, DadosJogoDTO dados) {
         jogoService.cadastrar(usuarioAutenticadoId, dados);
         return Mensagens.JOGO_CADASTRADO_SUCESSO;
+    }
+
+    /**
+     * Consulta um jogo do catálogo.
+     *
+     * @param usuarioAutenticadoId identificador do usuário autenticado
+     * @param jogoId identificador do jogo
+     * @return dados do jogo
+     */
+    public JogoDTO buscarJogo(Integer usuarioAutenticadoId, int jogoId) {
+        return jogoService.buscarPorId(usuarioAutenticadoId, jogoId);
+    }
+
+    /**
+     * Processa a solicitação de alteração de um jogo.
+     *
+     * @param usuarioAutenticadoId identificador do usuário autenticado
+     * @param jogoId identificador do jogo
+     * @param dados novos dados do jogo enviados pelo cliente
+     * @return mensagem de sucesso
+     */
+    public String alterarJogo(Integer usuarioAutenticadoId, int jogoId, DadosJogoDTO dados) {
+        jogoService.alterar(usuarioAutenticadoId, jogoId, dados);
+        return Mensagens.JOGO_ALTERADO_SUCESSO;
     }
 }

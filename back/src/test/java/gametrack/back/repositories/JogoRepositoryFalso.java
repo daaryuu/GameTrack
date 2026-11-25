@@ -3,6 +3,7 @@ package gametrack.back.repositories;
 import gametrack.back.model.Jogo;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repositório de jogos para testes: a listagem é definida por cada teste, e os jogos inseridos
@@ -12,6 +13,7 @@ public class JogoRepositoryFalso implements JogoRepository {
 
     private final Listagem listagem;
     private final List<Jogo> inseridos = new ArrayList<>();
+    private Jogo gravado;
 
     /**
      * Cria o repositório.
@@ -40,6 +42,29 @@ public class JogoRepositoryFalso implements JogoRepository {
     @Override
     public void inserir(Jogo jogo) {
         inseridos.add(jogo);
+    }
+
+    @Override
+    public Optional<Jogo> buscarPorId(int id) {
+        return Optional.ofNullable(gravado).filter(jogo -> jogo.getId() == id);
+    }
+
+    @Override
+    public boolean atualizar(Jogo jogo) {
+        boolean existe = buscarPorId(jogo.getId()).isPresent();
+        if (existe) {
+            gravado = jogo;
+        }
+        return existe;
+    }
+
+    /**
+     * Define o único jogo que a busca por identificador encontra.
+     *
+     * @param jogo jogo gravado
+     */
+    public void definirGravado(Jogo jogo) {
+        this.gravado = jogo;
     }
 
     /** Resposta da listagem. */
