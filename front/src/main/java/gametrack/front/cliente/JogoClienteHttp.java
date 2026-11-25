@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.StringJoiner;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 
 import gametrack.front.dto.FiltroJogoDTO;
 import gametrack.front.dto.JogoDTO;
@@ -23,6 +24,7 @@ public class JogoClienteHttp implements JogoCliente{
     private static final int STATUS_SUCESSO_MAXIMO = 299;
     private static final Duration TEMPO_LIMITE = Duration.ofSeconds(10);
     private static final String MENSAGEM_SEM_CONEXAO = "Não foi possível conectar ao servidor!";
+    private static final String MENSAGEM_ERRO = "Erro inesperado no servidor!";
 
     private final String urlBase;
     private final HttpClient http;
@@ -112,8 +114,16 @@ public class JogoClienteHttp implements JogoCliente{
 
     private void verificarStatus(HttpResponse<String> resposta) {
         if (resposta.statusCode() > STATUS_SUCESSO_MAXIMO) {
-            RespostaErro erro = gson.fromJson(resposta.body(), RespostaErro.class);
-            throw new ErroServidorException(erro.mensagem());
+            throw new ErroServidorException(extrairMensagem(resposta.body()));
+        }
+    }
+
+    private String extrairMensagem(String corpo) {
+        try {
+            RespostaErro erro = gson.fromJson(corpo, RespostaErro.class);
+            return erro != null && erro.mensagem() != null ? erro.mensagem() : MENSAGEM_ERRO;
+        } catch (JsonSyntaxException e) {
+            return MENSAGEM_ERRO;
         }
     }
 

@@ -32,7 +32,9 @@ public class JogoService {
      *
      * @param usuarioAutenticadoId identificador do usuário autenticado na sessão
      * @param filtro critérios opcionais de filtragem
-     * @return lista de DTOs dos jogos encontrados
+     * @return lista de DTOs dos jogos encontrados, vazia quando nenhum jogo atende ao filtro
+     * @throws NegocioException se o ano do filtro não for numérico
+     * @throws AutenticacaoException se não houver usuário autenticado
      */
     public List<JogoDTO> listarCatalogo(Integer usuarioAutenticadoId, FiltroJogoDTO filtro) {
         validarUsuarioAutenticado(usuarioAutenticadoId);
@@ -44,10 +46,6 @@ public class JogoService {
                 filtroEfetivo.genero(),
                 filtroEfetivo.desenvolvedora(),
                 anoConvertido);
-
-        if (jogos.isEmpty()) {
-            throw new NegocioException(Mensagens.NENHUM_JOGO_ENCONTRADO);
-        }
 
         return jogos.stream().map(JogoDTO::deEntidade).toList();
     }
