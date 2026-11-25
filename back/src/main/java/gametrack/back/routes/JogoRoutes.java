@@ -1,26 +1,19 @@
 package gametrack.back.routes;
 
-import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import gametrack.back.config.Mensagens;
 import gametrack.back.controllers.JogoController;
 import gametrack.back.model.FiltroJogoDTO;
 import gametrack.back.model.JogoDTO;
-import gametrack.back.repositories.PersistenciaException;
-import gametrack.back.seguranca.AutenticacaoException;
 import gametrack.back.seguranca.VerificadorAutenticacao;
-import gametrack.back.services.NegocioException;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Registra e trata as rotas HTTP do catálogo de jogos.
@@ -34,21 +27,12 @@ import java.util.logging.Logger;
  */
 public class JogoRoutes {
 
-    private static final Logger LOGGER = Logger.getLogger(JogoRoutes.class.getName());
     private static final String CAMINHO_JOGOS = "/jogos";
     private static final String METODO_GET = "GET";
     private static final String CABECALHO_AUTH = "Authorization";
-    private static final String CABECALHO_TIPO = "Content-Type";
-    private static final String TIPO_JSON = "application/json; charset=UTF-8";
-    private static final int STATUS_OK = 200;
-    private static final int STATUS_REQUISICAO_INVALIDA = 400;
-    private static final int STATUS_NAO_AUTENTICADO = 401;
-    private static final int STATUS_METODO_NAO_PERMITIDO = 405;
-    private static final int STATUS_ERRO_INTERNO = 500;
 
     private final JogoController jogoController;
     private final VerificadorAutenticacao verificadorAutenticacao;
-    private final Gson gson;
 
     /**
      * Constrói o gerenciador de rotas de jogos.
@@ -60,7 +44,6 @@ public class JogoRoutes {
             JogoController jogoController, VerificadorAutenticacao verificadorAutenticacao) {
         this.jogoController = jogoController;
         this.verificadorAutenticacao = verificadorAutenticacao;
-        this.gson = new Gson();
     }
 
     /**
@@ -74,23 +57,17 @@ public class JogoRoutes {
 
     private void tratarRequisicao(HttpExchange troca) throws IOException {
         if (!METODO_GET.equalsIgnoreCase(troca.getRequestMethod())) {
-            enviarErro(troca, STATUS_METODO_NAO_PERMITIDO, Mensagens.METODO_NAO_PERMITIDO);
+            RespostaHttp.enviarMensagem(troca, RespostaHttp.STATUS_METODO_NAO_PERMITIDO,
+                    Mensagens.METODO_NAO_PERMITIDO);
             return;
         }
         try {
-            enviarResposta(troca, STATUS_OK, gson.toJson(listarJogos(troca)));
-        } catch (AutenticacaoException e) {
-            enviarErro(troca, STATUS_NAO_AUTENTICADO, e.getMessage());
-        } catch (NegocioException e) {
-            enviarErro(troca, STATUS_REQUISICAO_INVALIDA, e.getMessage());
+            RespostaHttp.enviarJson(troca, RespostaHttp.STATUS_OK, listarJogos(troca));
         } catch (IllegalArgumentException e) {
-            enviarErro(troca, STATUS_REQUISICAO_INVALIDA, Mensagens.PARAMETROS_INVALIDOS);
-        } catch (PersistenciaException e) {
-            LOGGER.log(Level.SEVERE, "Falha ao consultar o catálogo.", e);
-            enviarErro(troca, STATUS_ERRO_INTERNO, e.getMessage());
+            RespostaHttp.enviarMensagem(troca, RespostaHttp.STATUS_REQUISICAO_INVALIDA,
+                    Mensagens.PARAMETROS_INVALIDOS);
         } catch (RuntimeException e) {
-            LOGGER.log(Level.SEVERE, "Erro inesperado ao listar o catálogo.", e);
-            enviarErro(troca, STATUS_ERRO_INTERNO, Mensagens.ERRO_INESPERADO);
+            RespostaHttp.enviarFalha(troca, e);
         }
     }
 
@@ -124,22 +101,5 @@ public class JogoRoutes {
 
     private String decodificar(String texto) {
         return URLDecoder.decode(texto, StandardCharsets.UTF_8);
-    }
-
-    private void enviarErro(HttpExchange troca, int status, String mensagem) throws IOException {
-        enviarResposta(troca, status, gson.toJson(new RespostaErro(mensagem)));
-    }
-
-    private void enviarResposta(HttpExchange troca, int status, String corpoJson)
-            throws IOException {
-        byte[] bytes = corpoJson.getBytes(StandardCharsets.UTF_8);
-        troca.getResponseHeaders().set(CABECALHO_TIPO, TIPO_JSON);
-        troca.sendResponseHeaders(status, bytes.length);
-        try (OutputStream saida = troca.getResponseBody()) {
-            saida.write(bytes);
-        }
-    }
-
-    private record RespostaErro(String mensagem) {
     }
 }
