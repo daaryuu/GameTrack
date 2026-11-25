@@ -15,7 +15,7 @@ import gametrack.back.routes.SessaoRoutes;
 import gametrack.back.routes.UsuarioRoutes;
 import gametrack.back.seguranca.BcryptCriptografiaSenha;
 import gametrack.back.seguranca.SessoesEmMemoria;
-import gametrack.back.seguranca.VerificadorAutenticacaoProvisorio;
+import gametrack.back.seguranca.VerificadorAutenticacao;
 import gametrack.back.services.AutenticacaoService;
 import gametrack.back.services.JogoService;
 import gametrack.back.services.UsuarioService;
@@ -55,10 +55,11 @@ public final class Servidor {
         Connection conexao = abrirConexao(configuracao);
         HttpServer servidor = HttpServer.create(
                 new InetSocketAddress(configuracao.portaServidor()), FILA_PADRAO);
-        montarRotasDeJogo(conexao).registrar(servidor);
+        SessoesEmMemoria sessoes = new SessoesEmMemoria(
+                configuracao.expiracaoDaSessao(), Clock.systemUTC());
+        montarRotasDeJogo(conexao, sessoes).registrar(servidor);
         montarRotasDeUsuario(conexao).registrar(servidor);
-        montarRotasDeSessao(conexao, new SessoesEmMemoria(
-                configuracao.expiracaoDaSessao(), Clock.systemUTC())).registrar(servidor);
+        montarRotasDeSessao(conexao, sessoes).registrar(servidor);
         // Executor padrão: uma requisição por vez, o que protege a conexão JDBC compartilhada.
         servidor.setExecutor(null);
         servidor.start();
@@ -71,10 +72,11 @@ public final class Servidor {
                 configuracao.urlBanco(), configuracao.usuarioBanco(), configuracao.senhaBanco());
     }
 
-    private static JogoRoutes montarRotasDeJogo(Connection conexao) {
+    private static JogoRoutes montarRotasDeJogo(
+            Connection conexao, VerificadorAutenticacao verificador) {
         JogoRepository repositorio = new JogoRepositoryJdbc(conexao);
         JogoController controller = new JogoController(new JogoService(repositorio));
-        return new JogoRoutes(controller, new VerificadorAutenticacaoProvisorio());
+        return new JogoRoutes(controller, verificador);
     }
 
     private static UsuarioRoutes montarRotasDeUsuario(Connection conexao) {
