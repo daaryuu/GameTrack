@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
  * @see RF004
  * @see RF004.1
  * @see RF005
+ * @see RF006
  */
 class JogoServiceTest {
 
@@ -201,6 +202,19 @@ class JogoServiceTest {
                 () -> cadastro.alterar(ADMINISTRADOR_ID, 99, jogo(2018)));
         assertEquals("Hollow Knight",
                 repositorioCadastro.buscarPorId(1).orElseThrow().getTitulo());
+    }
+
+    @Test
+    void deveExcluirJogoSoPeloAdministrador() {
+        repositorioCadastro.definirGravado(HOLLOW_KNIGHT);
+
+        assertThrows(PermissaoException.class, () -> cadastro.excluir(2, 1));
+        assertThrows(AutenticacaoException.class, () -> cadastro.excluir(null, 1));
+        assertTrue(repositorioCadastro.buscarPorId(1).isPresent());
+
+        cadastro.excluir(ADMINISTRADOR_ID, 1);
+        assertTrue(repositorioCadastro.buscarPorId(1).isEmpty());
+        assertThrows(NaoEncontradoException.class, () -> cadastro.excluir(ADMINISTRADOR_ID, 1));
     }
 
     private void conferirRecusa(DadosJogoDTO dados, String mensagem) {
