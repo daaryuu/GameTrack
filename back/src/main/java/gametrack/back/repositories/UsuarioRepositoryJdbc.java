@@ -17,7 +17,7 @@ import java.util.Optional;
  * @see RF001.1
  * @see RNF003
  */
-public class UsuarioRepositoryJdbc implements UsuarioRepository {
+public class UsuarioRepositoryJdbc implements UsuarioRepository, PerfilRepository {
 
     /** Código do MySQL para violação de chave única (ER_DUP_ENTRY). */
     private static final int ERRO_CHAVE_DUPLICADA = 1062;
@@ -25,6 +25,8 @@ public class UsuarioRepositoryJdbc implements UsuarioRepository {
             "SELECT 1 FROM Usuario WHERE apelido = ? LIMIT 1";
     private static final String SQL_BUSCAR_POR_APELIDO =
             "SELECT id, apelido, senha_hash, perfil FROM Usuario WHERE apelido = ?";
+    private static final String SQL_BUSCAR_PERFIL =
+            "SELECT perfil FROM Usuario WHERE id = ?";
     private static final String SQL_INSERIR_USUARIO =
             "INSERT INTO Usuario (apelido, senha_hash, perfil) VALUES (?, ?, ?)";
 
@@ -71,6 +73,26 @@ public class UsuarioRepositoryJdbc implements UsuarioRepository {
             stmt.setString(1, apelido);
             try (ResultSet rs = stmt.executeQuery()) {
                 return rs.next() ? Optional.of(mapearUsuario(rs)) : Optional.empty();
+            }
+        } catch (SQLException e) {
+            throw new PersistenciaException(e);
+        }
+    }
+
+    /**
+     * Busca no banco o perfil da conta.
+     *
+     * @param usuarioId identificador da conta
+     * @return perfil da conta ou vazio
+     */
+    @Override
+    public Optional<Perfil> buscarPerfil(int usuarioId) {
+        try (PreparedStatement stmt = conexao.prepareStatement(SQL_BUSCAR_PERFIL)) {
+            stmt.setQueryTimeout(Mensagens.TIMEOUT_BANCO_SEGUNDOS);
+            stmt.setInt(1, usuarioId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next()
+                        ? Optional.of(Perfil.valueOf(rs.getString("perfil"))) : Optional.empty();
             }
         } catch (SQLException e) {
             throw new PersistenciaException(e);
