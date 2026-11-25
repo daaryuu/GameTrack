@@ -23,6 +23,7 @@ final class EstiloCampo {
 
     static void aplicar(JTextComponent campo) {
         campo.setOpaque(false);
+        campo.setBackground(Tema.FUNDO_CAMPO);
         campo.setForeground(Tema.TEXTO);
         campo.setCaretColor(Tema.TEXTO);
         campo.setSelectionColor(Tema.ROXO);
@@ -33,7 +34,7 @@ final class EstiloCampo {
 
     static void desenharFundo(JTextComponent campo, Graphics grafico) {
         Graphics2D g2 = Tema.suavizar(grafico);
-        g2.setColor(Tema.FUNDO_CAMPO);
+        g2.setColor(campo.getBackground());
         g2.fill(new RoundRectangle2D.Float(0, 0, campo.getWidth(), campo.getHeight(),
                 ARCO, ARCO));
         g2.dispose();
