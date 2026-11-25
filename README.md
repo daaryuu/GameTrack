@@ -168,7 +168,7 @@ GameTrack/
 │       └── test/java/gametrack/front/  Testes
 ├── sql/                           Scripts do banco de dados (MySQL)
 ├── docs/
-│   └── diagramas/                 Diagramas de classes, de pacotes e de sequência
+│   └── diagramas/                 Diagramas de classes, de pacotes, de sequência e de implantação
 ├── Requisitos/                    Documento de requisitos
 └── Padrões Adotados/              Regras e padrões da equipe
     └── registros/                 Revisões de requisitos, por data
@@ -227,3 +227,25 @@ Cada diagrama mostra a ordem das chamadas entre tela, cliente, controller, servi
 **RF010 – Excluir item da biblioteca**
 
 ![Diagrama de sequência do RF010 – Excluir item da biblioteca](docs/diagramas/sequencia/RF010_excluir_item.png)
+
+### 5.5 Diagrama de implantação
+
+Mostra as máquinas em que o sistema é instalado, o que roda em cada uma e como elas se comunicam. É a implantação planejada; no desenvolvimento, tudo roda no mesmo computador.
+
+![Diagrama de implantação](docs/diagramas/diagrama_de_implantacao.png)
+
+| Dispositivo | Quantidade | Ambiente de execução | O que fica instalado |
+|---|---|---|---|
+| Computador do usuário (Windows, Linux ou macOS) | 1 ou mais | JVM (Java 25) | `gametrack-front.jar`: telas Swing e cliente HTTP (pacotes view, componentes, cliente e dto) |
+| Servidor de aplicação (Windows, Linux ou macOS) | 1 | JVM (Java 25) | `gametrack-back.jar`: API HTTP (pacotes routes, controllers, services, repositories, model, seguranca e config) e `config.properties` |
+| Servidor de banco de dados | 1 | MySQL 9.7 LTS | Banco `gametrack`, com as tabelas `Usuario`, `Jogo`, `Categoria` e `ItemBiblioteca`, criado por `sql/01_criar_tabelas.sql` |
+
+| Comunicação | Protocolo | Porta padrão |
+|---|---|---|
+| Aplicativo ↔ servidor de aplicação | HTTP, com dados em JSON | TCP 8080 |
+| Servidor de aplicação ↔ banco de dados | JDBC sobre TCP | TCP 3306 |
+
+- O aplicativo não acessa o banco; toda operação passa pelo servidor de aplicação. Por isso, só a porta 8080 precisa ficar acessível aos computadores dos usuários, e a 3306 deve aceitar apenas conexões do servidor de aplicação.
+- O `config.properties` é lido na inicialização do servidor. Guarda o endereço e o acesso do banco (`db.url`, `db.usuario` e `db.senha`), a porta, a senha inicial do administrador e o tempo de expiração da sessão, e não é versionado.
+- O Java 25 e o MySQL 9.7 LTS atendem ao RNF008.
+- O HTTP não é criptografado. O sistema deve ser usado em uma rede local confiável; para uma rede aberta, seria preciso acrescentar HTTPS.
