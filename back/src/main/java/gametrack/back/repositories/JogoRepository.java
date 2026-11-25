@@ -11,6 +11,7 @@ import java.util.Optional;
  * @see RF004
  * @see RF004.1
  * @see RF005
+ * @see RF006
  * @see RNF004
  */
 public interface JogoRepository {
@@ -48,4 +49,12 @@ public interface JogoRepository {
      * @return verdadeiro se o jogo existia e foi atualizado
      */
     boolean atualizar(Jogo jogo);
+
+    /**
+     * Exclui um jogo do catálogo.
+     *
+     * @param id identificador do jogo
+     * @return verdadeiro se o jogo existia e foi excluído
+     */
+    boolean excluir(int id);
 }

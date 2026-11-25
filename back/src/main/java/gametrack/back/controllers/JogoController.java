@@ -14,6 +14,7 @@ import java.util.List;
  * @see RF004
  * @see RF004.1
  * @see RF005
+ * @see RF006
  */
 public class JogoController {
 
@@ -73,5 +74,17 @@ public class JogoController {
     public String alterarJogo(Integer usuarioAutenticadoId, int jogoId, DadosJogoDTO dados) {
         jogoService.alterar(usuarioAutenticadoId, jogoId, dados);
         return Mensagens.JOGO_ALTERADO_SUCESSO;
+    }
+
+    /**
+     * Processa a solicitação de exclusão de um jogo.
+     *
+     * @param usuarioAutenticadoId identificador do usuário autenticado
+     * @param jogoId identificador do jogo
+     * @return mensagem de sucesso
+     */
+    public String excluirJogo(Integer usuarioAutenticadoId, int jogoId) {
+        jogoService.excluir(usuarioAutenticadoId, jogoId);
+        return Mensagens.JOGO_EXCLUIDO_SUCESSO;
     }
 }

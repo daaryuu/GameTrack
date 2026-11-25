@@ -44,6 +44,7 @@ public final class Mensagens {
             "Operação exclusiva do administrador.";
     public static final String JOGO_CADASTRADO_SUCESSO = "Jogo cadastrado com sucesso!";
     public static final String JOGO_ALTERADO_SUCESSO = "Jogo alterado com sucesso!";
+    public static final String JOGO_EXCLUIDO_SUCESSO = "Jogo excluído com sucesso!";
     public static final String JOGO_NAO_ENCONTRADO = "Jogo não encontrado!";
     public static final String JOGO_DADOS_NAO_INFORMADOS = "Informe todos os dados do jogo!";
     public static final String JOGO_DADOS_LONGOS =
