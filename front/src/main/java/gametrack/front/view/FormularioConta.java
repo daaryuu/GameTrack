@@ -101,6 +101,10 @@ class FormularioConta extends JPanel {
         exibirMensagem(texto, Tema.SUCESSO);
     }
 
+    void exibirErro(String texto) {
+        exibirMensagem(texto, Tema.ERRO);
+    }
+
     private void adicionarCampo(String texto, JComponent campo) {
         JLabel rotulo = criarRotulo(texto, Font.PLAIN, TAMANHO_ROTULO);
         rotulo.setLabelFor(campo);
@@ -125,9 +129,8 @@ class FormularioConta extends JPanel {
         componente.setAlignmentX(Component.LEFT_ALIGNMENT);
     }
 
-    private void exibirErro(Throwable causa) {
-        exibirMensagem(causa instanceof ErroServidorException
-                ? causa.getMessage() : MENSAGEM_ERRO, Tema.ERRO);
+    private void exibirFalha(Throwable causa) {
+        exibirErro(causa instanceof ErroServidorException ? causa.getMessage() : MENSAGEM_ERRO);
     }
 
     private void exibirMensagem(String texto, Color cor) {
@@ -170,7 +173,7 @@ class FormularioConta extends JPanel {
                 get();
                 aoConcluir.run();
             } catch (ExecutionException e) {
-                exibirErro(e.getCause());
+                exibirFalha(e.getCause());
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
