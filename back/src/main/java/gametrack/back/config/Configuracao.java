@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Properties;
 
 /**
@@ -15,6 +16,7 @@ import java.util.Properties;
 public final class Configuracao {
 
     private static final String ARQUIVO = "config.properties";
+    private static final String EXPIRACAO_PADRAO_MINUTOS = "30";
 
     private final Properties propriedades;
 
@@ -87,6 +89,16 @@ public final class Configuracao {
      */
     public int portaServidor() {
         return Integer.parseInt(obrigatoria("servidor.porta"));
+    }
+
+    /**
+     * Devolve o tempo sem uso até a sessão expirar (RNF007).
+     *
+     * @return valor de {@code sessao.expiracao.minutos}, ou 30 minutos se não for informado
+     */
+    public Duration expiracaoDaSessao() {
+        return Duration.ofMinutes(Long.parseLong(propriedades.getProperty(
+                "sessao.expiracao.minutos", EXPIRACAO_PADRAO_MINUTOS).trim()));
     }
 
     private String obrigatoria(String chave) {

@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -41,6 +42,13 @@ class ConfiguracaoTest {
         Configuracao configuracao = de("db.url=x\ndb.usuario=root\nservidor.porta=1\n");
 
         assertEquals("", configuracao.senhaBanco());
+    }
+
+    @Test
+    void deveLerAExpiracaoDaSessaoOuUsar30Minutos() throws IOException {
+        assertEquals(Duration.ofMinutes(5),
+                de("sessao.expiracao.minutos=5\n").expiracaoDaSessao());
+        assertEquals(Duration.ofMinutes(30), de("").expiracaoDaSessao());
     }
 
     @Test

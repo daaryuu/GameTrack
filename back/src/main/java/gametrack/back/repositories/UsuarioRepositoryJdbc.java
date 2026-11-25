@@ -7,6 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Optional;
 
 /**
  * Implementação JDBC do repositório de usuários para MySQL.
@@ -21,6 +22,8 @@ public class UsuarioRepositoryJdbc implements UsuarioRepository {
     private static final int ERRO_CHAVE_DUPLICADA = 1062;
     private static final String SQL_EXISTE_APELIDO =
             "SELECT 1 FROM Usuario WHERE apelido = ? LIMIT 1";
+    private static final String SQL_BUSCAR_POR_APELIDO =
+            "SELECT id, apelido, senha_hash FROM Usuario WHERE apelido = ?";
     private static final String SQL_INSERIR_USUARIO =
             "INSERT INTO Usuario (apelido, senha_hash) VALUES (?, ?)";
 
@@ -52,6 +55,30 @@ public class UsuarioRepositoryJdbc implements UsuarioRepository {
         } catch (SQLException e) {
             throw new PersistenciaException(e);
         }
+    }
+
+    /**
+     * Busca no banco a conta com o apelido informado.
+     *
+     * @param apelido apelido a buscar
+     * @return conta encontrada ou vazio
+     */
+    @Override
+    public Optional<Usuario> buscarPorApelido(String apelido) {
+        try (PreparedStatement stmt = conexao.prepareStatement(SQL_BUSCAR_POR_APELIDO)) {
+            stmt.setQueryTimeout(Mensagens.TIMEOUT_BANCO_SEGUNDOS);
+            stmt.setString(1, apelido);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next() ? Optional.of(mapearUsuario(rs)) : Optional.empty();
+            }
+        } catch (SQLException e) {
+            throw new PersistenciaException(e);
+        }
+    }
+
+    private Usuario mapearUsuario(ResultSet rs) throws SQLException {
+        return new Usuario(
+                rs.getInt("id"), rs.getString("apelido"), rs.getString("senha_hash"));
     }
 
     /**
