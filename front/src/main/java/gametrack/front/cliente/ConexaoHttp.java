@@ -11,10 +11,15 @@ import java.time.Duration;
 
 /**
  * Envia as requisições ao servidor e converte as respostas de erro em
- * {@link ErroServidorException}. É usada por todos os clientes HTTP.
+ * {@link ErroServidorException}. Todos os clientes HTTP devem compartilhar a mesma conexão,
+ * pois é ela que guarda o token da sessão e o envia em cada requisição.
+ *
+ * @see RF002
  */
-final class ConexaoHttp {
+public final class ConexaoHttp {
 
+    private static final String CABECALHO_AUTH = "Authorization";
+    private static final String PREFIXO_CREDENCIAL = "Bearer ";
     private static final String CABECALHO_TIPO = "Content-Type";
     private static final String TIPO_JSON = "application/json; charset=UTF-8";
     private static final int STATUS_SUCESSO_MAXIMO = 299;
@@ -26,16 +31,37 @@ final class ConexaoHttp {
     private final HttpClient http = HttpClient.newHttpClient();
     private final Gson gson = new Gson();
 
-    ConexaoHttp(String urlBase) {
+    // As requisições rodam em threads do SwingWorker, diferentes a cada envio.
+    private volatile String token;
+
+    /**
+     * Cria a conexão, ainda sem sessão.
+     *
+     * @param urlBase endereço do servidor, como {@code http://localhost:8080}
+     */
+    public ConexaoHttp(String urlBase) {
         this.urlBase = urlBase;
+    }
+
+    void definirToken(String novoToken) {
+        this.token = novoToken;
     }
 
     <T> T get(String caminho, Class<T> tipo) {
         return gson.fromJson(enviar(novaRequisicao(caminho).GET()), tipo);
     }
 
+    <T> T post(String caminho, Object corpo, Class<T> tipo) {
+        return gson.fromJson(enviarPost(caminho, corpo), tipo);
+    }
+
     void post(String caminho, Object corpo) {
-        enviar(novaRequisicao(caminho).header(CABECALHO_TIPO, TIPO_JSON).POST(json(corpo)));
+        enviarPost(caminho, corpo);
+    }
+
+    private String enviarPost(String caminho, Object corpo) {
+        return enviar(novaRequisicao(caminho)
+                .header(CABECALHO_TIPO, TIPO_JSON).POST(json(corpo)));
     }
 
     void put(String caminho, Object corpo) {
@@ -47,7 +73,13 @@ final class ConexaoHttp {
     }
 
     private HttpRequest.Builder novaRequisicao(String caminho) {
-        return HttpRequest.newBuilder(URI.create(urlBase + caminho)).timeout(TEMPO_LIMITE);
+        HttpRequest.Builder requisicao =
+                HttpRequest.newBuilder(URI.create(urlBase + caminho)).timeout(TEMPO_LIMITE);
+        String tokenAtual = token;
+        if (tokenAtual != null) {
+            requisicao.header(CABECALHO_AUTH, PREFIXO_CREDENCIAL + tokenAtual);
+        }
+        return requisicao;
     }
 
     private HttpRequest.BodyPublisher json(Object corpo) {
