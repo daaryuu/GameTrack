@@ -7,6 +7,7 @@ import gametrack.front.componentes.BotaoArredondado;
 import gametrack.front.componentes.BotaoLink;
 import gametrack.front.componentes.CaixaOpcoes;
 import gametrack.front.componentes.CampoTextoComDica;
+import gametrack.front.componentes.Dialogo;
 import gametrack.front.componentes.ModeloTabelaJogos;
 import gametrack.front.componentes.PainelArredondado;
 import gametrack.front.componentes.TabelaJogos;
@@ -23,7 +24,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.swing.BorderFactory;
@@ -33,12 +33,12 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.SwingWorker;
 
 /**
  * Tela I_CatalogoLista: lista os jogos do catálogo e permite filtrar por título, gênero,
- * desenvolvedora e ano (RF004), no layout do protótipo do Figma.
- * A tela só mostra dados; a busca é feita pelo {@link JogoCliente}, em segundo plano,
+ * desenvolvedora e ano (RF004), no layout do protótipo do Figma. O administrador também exclui
+ * jogos por ela, depois de confirmar (RF006).
+ * A tela só mostra dados; o acesso a eles é feito pelo {@link JogoCliente}, em segundo plano,
  * para a janela não travar.
  */
 public class CatalogoListaView extends JPanel {
@@ -47,6 +47,7 @@ public class CatalogoListaView extends JPanel {
     private static final String SUBTITULO_TELA =
             "Encontre seu próximo jogo. Explore por título, gênero ou estúdio.";
     private static final String MENSAGEM_LISTA_VAZIA = "Nenhum jogo encontrado.";
+    private static final String JOGO_EXCLUIDO = "Jogo excluído com sucesso!";
     private static final String TITULO_ERRO = "Erro";
     private static final String PADRAO_GENERO = "Todos os gêneros";
     private static final String PADRAO_DESENVOLVEDORA = "Todas";
@@ -107,6 +108,7 @@ public class CatalogoListaView extends JPanel {
         add(criarCorpo(), BorderLayout.CENTER);
         add(criarRodape(), BorderLayout.SOUTH);
         definirOpcoesPadrao();
+        tabela.definirAoAcionar(AcaoJogo.EXCLUIR, this::confirmarExclusao);
         carregarJogos(FiltroJogoDTO.semFiltro());
     }
 
@@ -153,15 +155,6 @@ public class CatalogoListaView extends JPanel {
      */
     public void definirAoAlterar(Consumer<JogoDTO> acao) {
         tabela.definirAoAcionar(AcaoJogo.ALTERAR, acao);
-    }
-
-    /**
-     * Define o que acontece quando o administrador clica no botão de excluir (RF006).
-     *
-     * @param acao recebe o jogo da linha clicada
-     */
-    public void definirAoExcluir(Consumer<JogoDTO> acao) {
-        tabela.definirAoAcionar(AcaoJogo.EXCLUIR, acao);
     }
 
     /**
@@ -315,7 +308,31 @@ public class CatalogoListaView extends JPanel {
 
     private void carregarJogos(FiltroJogoDTO filtro) {
         mensagem.setText(" ");
-        new BuscaJogos(filtro).execute();
+        new Tarefa<>(() -> cliente.listar(filtro),
+                jogos -> exibirJogos(jogos, filtro), this::tratarErro).execute();
+    }
+
+    private void confirmarExclusao(JogoDTO jogo) {
+        boolean confirmado = Dialogo.confirmar(this, new Dialogo.Confirmacao(
+                "Excluir jogo do catálogo?",
+                "Deseja excluir “" + jogo.titulo() + "” do catálogo?\n"
+                        + "Esta ação não pode ser desfeita.",
+                "Excluir jogo"));
+        if (confirmado) {
+            excluir(jogo);
+        }
+    }
+
+    private void excluir(JogoDTO jogo) {
+        new Tarefa<>(() -> {
+            cliente.excluir(jogo.id());
+            return jogo;
+        }, excluido -> concluirExclusao(), this::tratarErro).execute();
+    }
+
+    private void concluirExclusao() {
+        limparFiltros();
+        Dialogo.informar(this, JOGO_EXCLUIDO);
     }
 
     private void exibirJogos(List<JogoDTO> jogos, FiltroJogoDTO filtro) {
@@ -378,31 +395,5 @@ public class CatalogoListaView extends JPanel {
 
     /** Uma coluna da área de filtros: rótulo, campo, largura mínima e peso na largura. */
     private record ColunaFiltro(String rotulo, JComponent campo, int largura, double peso) {
-    }
-
-    /** Busca os jogos fora da thread da interface e exibe o resultado ao terminar. */
-    private class BuscaJogos extends SwingWorker<List<JogoDTO>, Void> {
-
-        private final FiltroJogoDTO filtro;
-
-        BuscaJogos(FiltroJogoDTO filtro) {
-            this.filtro = filtro;
-        }
-
-        @Override
-        protected List<JogoDTO> doInBackground() {
-            return cliente.listar(filtro);
-        }
-
-        @Override
-        protected void done() {
-            try {
-                exibirJogos(get(), filtro);
-            } catch (ExecutionException e) {
-                tratarErro(e.getCause());
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
     }
 }
