@@ -58,6 +58,15 @@ public class JogoRepositoryFalso implements JogoRepository {
         return existe;
     }
 
+    @Override
+    public boolean excluir(int id) {
+        boolean existe = buscarPorId(id).isPresent();
+        if (existe) {
+            gravado = null;
+        }
+        return existe;
+    }
+
     /**
      * Define o único jogo que a busca por identificador encontra.
      *

@@ -32,6 +32,8 @@ public class JogoRepositoryJdbc implements JogoRepository {
     private static final String SQL_ATUALIZAR =
             "UPDATE Jogo SET titulo = ?, genero = ?, desenvolvedora = ?, ano = ? WHERE id = ?";
 
+    private static final String SQL_EXCLUIR = "DELETE FROM Jogo WHERE id = ?";
+
     private final Connection conexao;
 
     /**
@@ -114,6 +116,24 @@ public class JogoRepositoryJdbc implements JogoRepository {
             stmt.setQueryTimeout(Mensagens.TIMEOUT_BANCO_SEGUNDOS);
             preencherParametros(stmt, List.of(jogo.getTitulo(), jogo.getGenero(),
                     jogo.getDesenvolvedora(), jogo.getAno(), jogo.getId()));
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new PersistenciaException(e);
+        }
+    }
+
+    /**
+     * Exclui o jogo do banco. A chave estrangeira impede excluir um jogo que está em alguma
+     * biblioteca (RF006.1).
+     *
+     * @param id identificador do jogo
+     * @return verdadeiro se o jogo existia
+     */
+    @Override
+    public boolean excluir(int id) {
+        try (PreparedStatement stmt = conexao.prepareStatement(SQL_EXCLUIR)) {
+            stmt.setQueryTimeout(Mensagens.TIMEOUT_BANCO_SEGUNDOS);
+            stmt.setInt(1, id);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new PersistenciaException(e);
