@@ -8,6 +8,7 @@ import gametrack.back.model.DadosJogoDTO;
 import gametrack.back.model.FiltroJogoDTO;
 import gametrack.back.model.JogoDTO;
 import gametrack.back.seguranca.VerificadorAutenticacao;
+import gametrack.back.services.NaoEncontradoException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLDecoder;
@@ -18,19 +19,24 @@ import java.util.Map;
 
 /**
  * Registra e trata as rotas HTTP do catálogo de jogos.
- * O GET responde 200 com a lista (vazia quando nada atende ao filtro), e o POST, exclusivo do
- * administrador, responde 201 quando o jogo é cadastrado. Os erros são 400 para dados
- * inválidos, 401 sem autenticação, 403 sem permissão, 405 para outros métodos e 500 para
- * falhas no banco ou inesperadas, sempre como {@code {"mensagem": "..."}}.
+ * Em {@code /jogos}, o GET responde 200 com a lista (vazia quando nada atende ao filtro), e o
+ * POST responde 201 quando o jogo é cadastrado. Em {@code /jogos/{id}}, o GET responde 200 com
+ * o jogo, e o PUT, 200 quando ele é alterado. POST e PUT são exclusivos do administrador. Os
+ * erros são 400 para dados inválidos, 401 sem autenticação, 403 sem permissão, 404 para jogo
+ * inexistente, 405 para outros métodos e 500 para falhas no banco ou inesperadas, sempre como
+ * {@code {"mensagem": "..."}}.
  *
  * @see RF003
  * @see RF004
  * @see RF004.1
+ * @see RF005
  * @see RNF003
  */
 public class JogoRoutes {
 
     private static final String CAMINHO_JOGOS = "/jogos";
+    private static final String CAMINHO_JOGO = "/jogos/";
+    private static final String METODO_PUT = "PUT";
     private static final String METODO_GET = "GET";
     private static final String METODO_POST = "POST";
     private static final String CABECALHO_AUTH = "Authorization";
@@ -51,27 +57,65 @@ public class JogoRoutes {
     }
 
     /**
-     * Vincula o endpoint {@code /jogos} ao servidor HTTP.
+     * Vincula os endpoints {@code /jogos} e {@code /jogos/{id}} ao servidor HTTP.
      *
      * @param servidor instância do servidor HTTP
      */
     public void registrar(HttpServer servidor) {
-        servidor.createContext(CAMINHO_JOGOS, this::tratarRequisicao);
+        servidor.createContext(CAMINHO_JOGOS, this::tratarCatalogo);
+        servidor.createContext(CAMINHO_JOGO, this::tratarJogo);
     }
 
-    private void tratarRequisicao(HttpExchange troca) throws IOException {
+    private void tratarCatalogo(HttpExchange troca) throws IOException {
         try {
             switch (troca.getRequestMethod()) {
                 case METODO_GET -> listarJogos(troca);
                 case METODO_POST -> cadastrarJogo(troca);
-                default -> RespostaHttp.enviarMensagem(troca,
-                        RespostaHttp.STATUS_METODO_NAO_PERMITIDO, Mensagens.METODO_NAO_PERMITIDO);
+                default -> recusarMetodo(troca);
             }
         } catch (IllegalArgumentException e) {
             RespostaHttp.enviarMensagem(troca, RespostaHttp.STATUS_REQUISICAO_INVALIDA,
                     Mensagens.PARAMETROS_INVALIDOS);
         } catch (RuntimeException e) {
             RespostaHttp.enviarFalha(troca, e);
+        }
+    }
+
+    private void tratarJogo(HttpExchange troca) throws IOException {
+        try {
+            switch (troca.getRequestMethod()) {
+                case METODO_GET -> buscarJogo(troca);
+                case METODO_PUT -> alterarJogo(troca);
+                default -> recusarMetodo(troca);
+            }
+        } catch (RuntimeException e) {
+            RespostaHttp.enviarFalha(troca, e);
+        }
+    }
+
+    private void recusarMetodo(HttpExchange troca) throws IOException {
+        RespostaHttp.enviarMensagem(troca,
+                RespostaHttp.STATUS_METODO_NAO_PERMITIDO, Mensagens.METODO_NAO_PERMITIDO);
+    }
+
+    private void buscarJogo(HttpExchange troca) throws IOException {
+        JogoDTO jogo = jogoController.buscarJogo(exigirUsuario(troca), extrairId(troca));
+        RespostaHttp.enviarJson(troca, RespostaHttp.STATUS_OK, jogo);
+    }
+
+    private void alterarJogo(HttpExchange troca) throws IOException {
+        Integer usuarioId = exigirUsuario(troca);
+        String mensagem = jogoController.alterarJogo(
+                usuarioId, extrairId(troca), RequisicaoJson.ler(troca, DadosJogoDTO.class));
+        RespostaHttp.enviarMensagem(troca, RespostaHttp.STATUS_OK, mensagem);
+    }
+
+    private int extrairId(HttpExchange troca) {
+        String id = troca.getRequestURI().getPath().substring(CAMINHO_JOGO.length());
+        try {
+            return Integer.parseInt(id);
+        } catch (NumberFormatException e) {
+            throw new NaoEncontradoException(Mensagens.JOGO_NAO_ENCONTRADO);
         }
     }
 
