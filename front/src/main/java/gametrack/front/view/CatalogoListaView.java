@@ -74,6 +74,8 @@ public class CatalogoListaView extends JPanel {
     private final CaixaOpcoes campoDesenvolvedora = new CaixaOpcoes();
     private final CaixaOpcoes campoAno = new CaixaOpcoes();
     private final JLabel contagem = criarRotulo(" ", Font.BOLD, TAMANHO_TEXTO, Tema.TEXTO);
+    private final JLabel mensagem =
+            criarRotulo(" ", Font.PLAIN, TAMANHO_TEXTO, Tema.SUCESSO);
     private final JLabel rodapeEsquerdo =
             criarRotulo(" ", Font.PLAIN, TAMANHO_LEGENDA, Tema.TEXTO_SECUNDARIO);
     private final JLabel rodapeDireito =
@@ -162,6 +164,16 @@ public class CatalogoListaView extends JPanel {
         tabela.definirAoAcionar(AcaoJogo.EXCLUIR, acao);
     }
 
+    /**
+     * Recarrega o catálogo, sem filtros, e exibe uma mensagem de sucesso até a próxima busca.
+     *
+     * @param texto mensagem exibida, como a de jogo cadastrado
+     */
+    public void recarregar(String texto) {
+        limparFiltros();
+        mensagem.setText(texto);
+    }
+
     private JPanel criarCabecalho() {
         JPanel cabecalho = criarPainelTransparente(new BorderLayout());
         JPanel botoes = criarPainelTransparente(new FlowLayout(FlowLayout.RIGHT, 0, 0));
@@ -189,7 +201,10 @@ public class CatalogoListaView extends JPanel {
         JPanel corpo = criarPainelTransparente(new BorderLayout(0, ESPACO));
         JPanel topo = criarPainelTransparente(new BorderLayout(0, ESPACO));
         topo.add(criarCartaoFiltros(), BorderLayout.CENTER);
-        topo.add(contagem, BorderLayout.SOUTH);
+        JPanel situacao = criarPainelTransparente(new BorderLayout());
+        situacao.add(contagem, BorderLayout.WEST);
+        situacao.add(mensagem, BorderLayout.EAST);
+        topo.add(situacao, BorderLayout.SOUTH);
         corpo.add(topo, BorderLayout.NORTH);
         corpo.add(criarCartaoTabela(), BorderLayout.CENTER);
         return corpo;
@@ -299,6 +314,7 @@ public class CatalogoListaView extends JPanel {
     }
 
     private void carregarJogos(FiltroJogoDTO filtro) {
+        mensagem.setText(" ");
         new BuscaJogos(filtro).execute();
     }
 
