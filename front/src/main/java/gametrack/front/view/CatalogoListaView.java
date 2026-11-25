@@ -2,6 +2,7 @@ package gametrack.front.view;
 
 import gametrack.front.cliente.JogoCliente;
 import gametrack.front.cliente.NaoAutenticadoException;
+import gametrack.front.componentes.AcaoJogo;
 import gametrack.front.componentes.BotaoArredondado;
 import gametrack.front.componentes.BotaoLink;
 import gametrack.front.componentes.CaixaOpcoes;
@@ -12,6 +13,7 @@ import gametrack.front.componentes.TabelaJogos;
 import gametrack.front.componentes.Tema;
 import gametrack.front.dto.FiltroJogoDTO;
 import gametrack.front.dto.JogoDTO;
+import gametrack.front.dto.Perfil;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -22,6 +24,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -48,6 +51,10 @@ public class CatalogoListaView extends JPanel {
     private static final String PADRAO_GENERO = "Todos os gêneros";
     private static final String PADRAO_DESENVOLVEDORA = "Todas";
     private static final String PADRAO_ANO = "Todos";
+    private static final List<AcaoJogo> ACOES_USUARIO = List.of(AcaoJogo.VER_DETALHES);
+    private static final List<AcaoJogo> ACOES_ADMINISTRADOR =
+            List.of(AcaoJogo.VER_DETALHES, AcaoJogo.ALTERAR, AcaoJogo.EXCLUIR);
+    private static final int ESPACO_BOTOES = 10;
     private static final int MARGEM = 24;
     private static final int ESPACO = 16;
     private static final int ESPACO_PEQUENO = 6;
@@ -73,7 +80,10 @@ public class CatalogoListaView extends JPanel {
             criarRotulo(" ", Font.PLAIN, TAMANHO_LEGENDA, Tema.TEXTO_SECUNDARIO);
     private final BotaoArredondado botaoBiblioteca =
             new BotaoArredondado("Minha biblioteca", Tema.FUNDO_BOTAO_SECUNDARIO);
-    private final TabelaJogos tabela = new TabelaJogos(modeloTabela);
+    private final BotaoArredondado botaoAdicionar =
+            new BotaoArredondado("Adicionar Jogo", Tema.ROXO);
+    private final boolean administrador;
+    private final TabelaJogos tabela;
     private Runnable aoExpirarSessao = () -> { };
     private int totalCatalogo;
 
@@ -81,9 +91,13 @@ public class CatalogoListaView extends JPanel {
      * Cria a tela e já carrega todos os jogos do catálogo.
      *
      * @param cliente acesso ao catálogo, no servidor ou em memória
+     * @param perfil perfil da conta; só o administrador vê as ações de manter o catálogo
      */
-    public CatalogoListaView(JogoCliente cliente) {
+    public CatalogoListaView(JogoCliente cliente, Perfil perfil) {
         this.cliente = cliente;
+        this.administrador = perfil == Perfil.ADMINISTRADOR;
+        this.tabela = new TabelaJogos(
+                modeloTabela, administrador ? ACOES_ADMINISTRADOR : ACOES_USUARIO);
         setBackground(Tema.FUNDO_JANELA);
         setLayout(new BorderLayout(0, ESPACO));
         setBorder(BorderFactory.createEmptyBorder(MARGEM, MARGEM, MARGEM, MARGEM));
@@ -117,16 +131,47 @@ public class CatalogoListaView extends JPanel {
      *
      * @param acao recebe o jogo da linha clicada
      */
-    public void definirAoVerDetalhes(java.util.function.Consumer<JogoDTO> acao) {
-        tabela.definirAoVerDetalhes(acao);
+    public void definirAoVerDetalhes(Consumer<JogoDTO> acao) {
+        tabela.definirAoAcionar(AcaoJogo.VER_DETALHES, acao);
+    }
+
+    /**
+     * Define o que acontece quando o administrador clica em "Adicionar Jogo" (RF003).
+     *
+     * @param acao ação a executar
+     */
+    public void definirAoAdicionar(Runnable acao) {
+        botaoAdicionar.addActionListener(evento -> acao.run());
+    }
+
+    /**
+     * Define o que acontece quando o administrador clica em "Alterar jogo" (RF005).
+     *
+     * @param acao recebe o jogo da linha clicada
+     */
+    public void definirAoAlterar(Consumer<JogoDTO> acao) {
+        tabela.definirAoAcionar(AcaoJogo.ALTERAR, acao);
+    }
+
+    /**
+     * Define o que acontece quando o administrador clica no botão de excluir (RF006).
+     *
+     * @param acao recebe o jogo da linha clicada
+     */
+    public void definirAoExcluir(Consumer<JogoDTO> acao) {
+        tabela.definirAoAcionar(AcaoJogo.EXCLUIR, acao);
     }
 
     private JPanel criarCabecalho() {
         JPanel cabecalho = criarPainelTransparente(new BorderLayout());
-        JPanel botao = criarPainelTransparente(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        botao.add(botaoBiblioteca);
+        JPanel botoes = criarPainelTransparente(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        botoes.add(botaoBiblioteca);
+        if (administrador) {
+            botoes.add(Box.createHorizontalStrut(ESPACO_BOTOES));
+            botoes.add(botaoAdicionar);
+        }
         cabecalho.add(criarTextosDoCabecalho(), BorderLayout.WEST);
-        cabecalho.add(botao, BorderLayout.EAST);
+        cabecalho.add(botoes, BorderLayout.EAST);
         return cabecalho;
     }
 

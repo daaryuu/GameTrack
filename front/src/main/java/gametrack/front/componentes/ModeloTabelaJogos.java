@@ -6,7 +6,7 @@ import javax.swing.table.AbstractTableModel;
 
 /**
  * Modelo de tabela que exibe jogos do catálogo, com as colunas título, gênero,
- * desenvolvedora, ano e a ação "Ver detalhes". Pode ser usado por qualquer tela que
+ * desenvolvedora, ano e as ações. Pode ser usado por qualquer tela que
  * liste jogos.
  */
 public class ModeloTabelaJogos extends AbstractTableModel {
@@ -15,12 +15,12 @@ public class ModeloTabelaJogos extends AbstractTableModel {
     public static final int COLUNA_TITULO = 0;
     private static final int COLUNA_GENERO = 1;
     private static final int COLUNA_DESENVOLVEDORA = 2;
-    private static final int COLUNA_ANO = 3;
-    private static final String TEXTO_ACAO = "Ver detalhes";
+    /** Índice da coluna do ano. */
+    public static final int COLUNA_ANO = 3;
     private static final String[] NOMES_COLUNAS =
             {"Título", "Gênero", "Desenvolvedora", "Ano", "Ação"};
 
-    /** Índice da coluna com o link "Ver detalhes". */
+    /** Índice da coluna das ações, desenhada pela {@link TabelaJogos}. */
     public static final int COLUNA_ACAO = 4;
 
     private List<JogoDTO> jogos = List.of();
@@ -68,7 +68,7 @@ public class ModeloTabelaJogos extends AbstractTableModel {
             case COLUNA_GENERO -> jogo.genero();
             case COLUNA_DESENVOLVEDORA -> jogo.desenvolvedora();
             case COLUNA_ANO -> jogo.ano();
-            case COLUNA_ACAO -> TEXTO_ACAO;
+            case COLUNA_ACAO -> "";
             default -> throw new IllegalArgumentException("Coluna inexistente: " + coluna);
         };
     }

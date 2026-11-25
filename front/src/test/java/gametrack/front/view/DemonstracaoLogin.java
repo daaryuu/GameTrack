@@ -65,7 +65,8 @@ public final class DemonstracaoLogin {
         telas.add(login, LOGIN);
         telas.add(cadastro, CADASTRO);
         login.definirAoCadastrar(() -> layout.show(telas, CADASTRO));
-        login.definirAoEntrar(() -> JOptionPane.showMessageDialog(telas, "Autenticado."));
+        login.definirAoEntrar(perfil -> JOptionPane.showMessageDialog(
+                telas, "Autenticado: " + perfil));
         cadastro.definirAoVoltar(() -> layout.show(telas, LOGIN));
         cadastro.definirAoCadastrar(() -> {
             login.exibirSucesso("Conta cadastrada com sucesso!");

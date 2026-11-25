@@ -3,6 +3,7 @@ package gametrack.front.view;
 import gametrack.front.cliente.JogoCliente;
 import gametrack.front.cliente.SessaoCliente;
 import gametrack.front.cliente.UsuarioCliente;
+import gametrack.front.dto.Perfil;
 import java.awt.CardLayout;
 import javax.swing.JPanel;
 
@@ -53,9 +54,9 @@ public class PrincipalView extends JPanel {
         return cadastro;
     }
 
-    private void abrirCatalogo() {
+    private void abrirCatalogo(Perfil perfil) {
         // A tela é criada só agora porque carrega os jogos ao ser criada, o que exige a sessão.
-        CatalogoListaView catalogo = new CatalogoListaView(jogos);
+        CatalogoListaView catalogo = new CatalogoListaView(jogos, perfil);
         catalogo.definirAoExpirarSessao(() -> encerrar(catalogo));
         add(catalogo, CATALOGO);
         layout.show(this, CATALOGO);

@@ -3,8 +3,10 @@ package gametrack.front.view;
 import gametrack.front.cliente.SessaoCliente;
 import gametrack.front.componentes.Tema;
 import gametrack.front.dto.CredenciaisDTO;
+import gametrack.front.dto.Perfil;
 import java.awt.Component;
 import java.awt.GridBagLayout;
+import java.util.function.Consumer;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
@@ -27,7 +29,7 @@ public class LoginView extends JPanel {
     private final FormularioConta formulario = new FormularioConta(TEXTOS, ESPACO_TITULO);
     private final ConviteComLink convite =
             new ConviteComLink("Ainda não tem uma conta?", "Cadastre-se");
-    private Runnable aoEntrar = () -> { };
+    private Consumer<Perfil> aoEntrar = perfil -> { };
 
     /**
      * Monta a tela.
@@ -47,9 +49,9 @@ public class LoginView extends JPanel {
     /**
      * Define o que fazer depois da autenticação, como abrir a biblioteca.
      *
-     * @param acao ação executada após a autenticação
+     * @param acao recebe o perfil da conta autenticada
      */
-    public void definirAoEntrar(Runnable acao) {
+    public void definirAoEntrar(Consumer<Perfil> acao) {
         this.aoEntrar = acao;
     }
 
@@ -99,8 +101,8 @@ public class LoginView extends JPanel {
         formulario.enviar(() -> cliente.autenticar(credenciais), this::concluirEntrada);
     }
 
-    private void concluirEntrada() {
+    private void concluirEntrada(Perfil perfil) {
         formulario.limpar();
-        aoEntrar.run();
+        aoEntrar.accept(perfil);
     }
 }

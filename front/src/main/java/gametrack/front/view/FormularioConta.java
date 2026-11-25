@@ -12,6 +12,8 @@ import java.awt.Font;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
@@ -76,10 +78,10 @@ class FormularioConta extends JPanel {
         botao.addActionListener(evento -> acao.run());
     }
 
-    void enviar(Runnable tarefa, Runnable aoConcluir) {
+    <T> void enviar(Supplier<T> tarefa, Consumer<T> aoConcluir) {
         mensagem.setText(SEM_MENSAGEM);
         botao.setEnabled(false);
-        new Envio(tarefa, aoConcluir).execute();
+        new Envio<>(tarefa, aoConcluir).execute();
     }
 
     void limpar() {
@@ -150,28 +152,26 @@ class FormularioConta extends JPanel {
     record Textos(String titulo, String dicaApelido, String dicaSenha, String botao) {
     }
 
-    private class Envio extends SwingWorker<Void, Void> {
+    private class Envio<T> extends SwingWorker<T, Void> {
 
-        private final Runnable tarefa;
-        private final Runnable aoConcluir;
+        private final Supplier<T> tarefa;
+        private final Consumer<T> aoConcluir;
 
-        Envio(Runnable tarefa, Runnable aoConcluir) {
+        Envio(Supplier<T> tarefa, Consumer<T> aoConcluir) {
             this.tarefa = tarefa;
             this.aoConcluir = aoConcluir;
         }
 
         @Override
-        protected Void doInBackground() {
-            tarefa.run();
-            return null;
+        protected T doInBackground() {
+            return tarefa.get();
         }
 
         @Override
         protected void done() {
             botao.setEnabled(true);
             try {
-                get();
-                aoConcluir.run();
+                aoConcluir.accept(get());
             } catch (ExecutionException e) {
                 exibirFalha(e.getCause());
             } catch (InterruptedException e) {
