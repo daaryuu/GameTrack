@@ -8,6 +8,7 @@ import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpServer;
 import gametrack.back.config.Mensagens;
 import gametrack.back.controllers.SessaoController;
+import gametrack.back.model.Perfil;
 import gametrack.back.model.SessaoDTO;
 import gametrack.back.model.Usuario;
 import gametrack.back.repositories.PersistenciaException;
@@ -65,8 +66,16 @@ class SessaoRoutesTest {
 
         assertEquals(201, resposta.statusCode());
         assertFalse(resposta.body().contains("hash_"));
-        String token = new Gson().fromJson(resposta.body(), SessaoDTO.class).token();
-        assertEquals(7, sessoes.exigirUsuarioAutenticado("Bearer " + token));
+        SessaoDTO sessao = new Gson().fromJson(resposta.body(), SessaoDTO.class);
+        assertEquals(7, sessoes.exigirUsuarioAutenticado("Bearer " + sessao.token()));
+        assertEquals(Perfil.USUARIO, sessao.perfil());
+    }
+
+    @Test
+    void deveInformarOPerfilDoAdministrador() throws Exception {
+        repositorio.joao.setPerfil(Perfil.ADMINISTRADOR);
+
+        assertTrue(post(LOGIN_VALIDO).body().contains("\"perfil\":\"ADMINISTRADOR\""));
     }
 
     @Test
