@@ -32,6 +32,7 @@ public final class Mensagens {
     public static final String ERRO_COMUNICACAO_BANCO =
             "Erro ao comunicar com o banco de dados.";
 
+    public static final String CREDENCIAIS_INCORRETAS = "Apelido ou senha incorretos!";
     public static final String USUARIO_NAO_AUTENTICADO = "Usuário não autenticado.";
     public static final String ANO_FILTRO_INVALIDO =
             "O ano informado no filtro deve ser numérico.";
