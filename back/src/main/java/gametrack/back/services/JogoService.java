@@ -14,13 +14,15 @@ import java.util.List;
 
 /**
  * Implementa as regras de negócio do catálogo de jogos. A consulta é aberta a todos os
- * usuários autenticados, e o cadastro e a alteração são exclusivos do administrador.
+ * usuários autenticados, e o cadastro, a alteração e a exclusão são exclusivos do
+ * administrador.
  *
  * @see RF003
  * @see RF003.1
  * @see RF004
  * @see RF004.1
  * @see RF005
+ * @see RF006
  */
 public class JogoService {
 
@@ -105,6 +107,22 @@ public class JogoService {
     public void alterar(Integer usuarioAutenticadoId, int jogoId, DadosJogoDTO dados) {
         validarAdministrador(usuarioAutenticadoId);
         if (!jogoRepository.atualizar(montarJogo(jogoId, dados))) {
+            throw jogoNaoEncontrado();
+        }
+    }
+
+    /**
+     * Exclui um jogo do catálogo.
+     *
+     * @param usuarioAutenticadoId identificador do usuário autenticado na sessão
+     * @param jogoId identificador do jogo
+     * @throws AutenticacaoException se não houver usuário autenticado
+     * @throws PermissaoException se o usuário não for administrador
+     * @throws NaoEncontradoException se o jogo não existir
+     */
+    public void excluir(Integer usuarioAutenticadoId, int jogoId) {
+        validarAdministrador(usuarioAutenticadoId);
+        if (!jogoRepository.excluir(jogoId)) {
             throw jogoNaoEncontrado();
         }
     }
