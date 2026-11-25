@@ -34,6 +34,7 @@ import org.junit.jupiter.api.Test;
  * @see RF003
  * @see RF004
  * @see RF005
+ * @see RF006
  * @see RNF003
  */
 class JogoRoutesTest {
@@ -211,7 +212,39 @@ class JogoRoutesTest {
     }
 
     @Test
-    void deveResponder405ParaOutrosMetodosEmUmJogo() throws Exception {
+    void deveExcluirUmJogo() throws Exception {
+        iniciar((t, g, d, a) -> List.of(), credencial -> ADMINISTRADOR_ID);
+        repositorio.definirGravado(PORTAL);
+
+        HttpResponse<String> resposta = delete("/jogos/5");
+
+        assertEquals(200, resposta.statusCode());
+        assertTrue(resposta.body().contains(Mensagens.JOGO_EXCLUIDO_SUCESSO));
+        assertEquals(404, delete("/jogos/5").statusCode());
+        assertEquals(404, delete("/jogos/").statusCode());
+        assertEquals(405, delete("/jogos").statusCode());
+    }
+
+    @Test
+    void deveRecusarExclusaoPorUsuarioComum() throws Exception {
+        iniciar((t, g, d, a) -> List.of(), credencial -> 2);
+        repositorio.definirGravado(PORTAL);
+
+        assertEquals(403, delete("/jogos/5").statusCode());
+        assertTrue(repositorio.buscarPorId(5).isPresent());
+    }
+
+    @Test
+    void deveExigirAutenticacaoNaExclusao() throws Exception {
+        iniciar((t, g, d, a) -> List.of(), credencial -> {
+            throw new AutenticacaoException();
+        });
+
+        assertEquals(401, delete("/jogos/5").statusCode());
+    }
+
+    @Test
+    void deveResponder405ParaOutrosMetodosEmUmJogo()throws Exception {
         iniciar((t, g, d, a) -> List.of(), credencial -> ADMINISTRADOR_ID);
 
         assertEquals(405, enviar(HttpRequest.newBuilder(uri("/jogos/5"))
@@ -282,6 +315,10 @@ class JogoRoutesTest {
     private HttpResponse<String> put(String caminho, String corpo) throws Exception {
         return enviar(HttpRequest.newBuilder(uri(caminho))
                 .PUT(HttpRequest.BodyPublishers.ofString(corpo)).build());
+    }
+
+    private HttpResponse<String> delete(String caminho) throws Exception {
+        return enviar(HttpRequest.newBuilder(uri(caminho)).DELETE().build());
     }
 
     private HttpResponse<String> getComCredencial(String credencial) throws Exception {
