@@ -1,81 +1,55 @@
 package gametrack.front.cliente;
 
-import java.io.IOException;
-import java.net.URI;
+import gametrack.front.dto.FiltroJogoDTO;
+import gametrack.front.dto.JogoDTO;
 import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.List;
 import java.util.StringJoiner;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
+/**
+ * Implementação de {@link JogoCliente} que fala com o servidor por HTTP.
+ *
+ * @see RF004
+ */
+public class JogoClienteHttp implements JogoCliente {
 
-import gametrack.front.dto.FiltroJogoDTO;
-import gametrack.front.dto.JogoDTO;
-
-public class JogoClienteHttp implements JogoCliente{
     private static final String CAMINHO_JOGOS = "/jogos";
-    private static final String CABECALHO_TIPO = "Content-Type";
-    private static final String TIPO_JSON = "application/json";
-    private static final int STATUS_SUCESSO_MAXIMO = 299;
-    private static final Duration TEMPO_LIMITE = Duration.ofSeconds(10);
-    private static final String MENSAGEM_SEM_CONEXAO = "Não foi possível conectar ao servidor!";
-    private static final String MENSAGEM_ERRO = "Erro inesperado no servidor!";
 
-    private final String urlBase;
-    private final HttpClient http;
-    private final Gson gson;
+    private final ConexaoHttp conexao;
 
-    public JogoClienteHttp(String urlBase){
-        this.urlBase = urlBase;
-        this.http = HttpClient.newHttpClient();
-        this.gson = new Gson();
+    /**
+     * Cria o cliente.
+     *
+     * @param urlBase endereço do servidor, como {@code http://localhost:8080}
+     */
+    public JogoClienteHttp(String urlBase) {
+        this.conexao = new ConexaoHttp(urlBase);
     }
 
-     @Override
+    @Override
     public List<JogoDTO> listar(FiltroJogoDTO filtro) {
-        HttpRequest requisicao = novaRequisicao(CAMINHO_JOGOS + montarConsulta(filtro))
-                .GET()
-                .build();
-        return List.of(gson.fromJson(enviar(requisicao), JogoDTO[].class));
+        return List.of(conexao.get(CAMINHO_JOGOS + montarConsulta(filtro), JogoDTO[].class));
     }
 
     @Override
     public JogoDTO buscarPorId(int id) {
-        HttpRequest requisicao = novaRequisicao(caminhoDoJogo(id)).GET().build();
-        return gson.fromJson(enviar(requisicao), JogoDTO.class);
+        return conexao.get(caminhoDoJogo(id), JogoDTO.class);
     }
 
     @Override
     public void cadastrar(JogoDTO jogo) {
-        HttpRequest requisicao = novaRequisicao(CAMINHO_JOGOS)
-                .header(CABECALHO_TIPO, TIPO_JSON)
-                .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(jogo)))
-                .build();
-        enviar(requisicao);
+        conexao.post(CAMINHO_JOGOS, jogo);
     }
 
     @Override
     public void alterar(JogoDTO jogo) {
-        HttpRequest requisicao = novaRequisicao(caminhoDoJogo(jogo.id()))
-                .header(CABECALHO_TIPO, TIPO_JSON)
-                .PUT(HttpRequest.BodyPublishers.ofString(gson.toJson(jogo)))
-                .build();
-        enviar(requisicao);
+        conexao.put(caminhoDoJogo(jogo.id()), jogo);
     }
 
     @Override
     public void excluir(int id) {
-        HttpRequest requisicao = novaRequisicao(caminhoDoJogo(id)).DELETE().build();
-        enviar(requisicao);
-    }
-
-    private HttpRequest.Builder novaRequisicao(String caminho) {
-        return HttpRequest.newBuilder(URI.create(urlBase + caminho)).timeout(TEMPO_LIMITE);
+        conexao.delete(caminhoDoJogo(id));
     }
 
     private String caminhoDoJogo(int id) {
@@ -96,37 +70,5 @@ public class JogoClienteHttp implements JogoCliente{
         if (valor != null && !valor.isBlank()) {
             parametros.add(nome + "=" + URLEncoder.encode(valor.trim(), StandardCharsets.UTF_8));
         }
-    }
-
-    private String enviar(HttpRequest requisicao) {
-        try {
-            HttpResponse<String> resposta =
-                    http.send(requisicao, HttpResponse.BodyHandlers.ofString());
-            verificarStatus(resposta);
-            return resposta.body();
-        } catch (IOException e) {
-            throw new ErroServidorException(MENSAGEM_SEM_CONEXAO, e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new ErroServidorException(MENSAGEM_SEM_CONEXAO, e);
-        }
-    }
-
-    private void verificarStatus(HttpResponse<String> resposta) {
-        if (resposta.statusCode() > STATUS_SUCESSO_MAXIMO) {
-            throw new ErroServidorException(extrairMensagem(resposta.body()));
-        }
-    }
-
-    private String extrairMensagem(String corpo) {
-        try {
-            RespostaErro erro = gson.fromJson(corpo, RespostaErro.class);
-            return erro != null && erro.mensagem() != null ? erro.mensagem() : MENSAGEM_ERRO;
-        } catch (JsonSyntaxException e) {
-            return MENSAGEM_ERRO;
-        }
-    }
-
-    private record RespostaErro(String mensagem) {
     }
 }
