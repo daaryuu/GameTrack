@@ -6,7 +6,6 @@ import gametrack.back.config.Mensagens;
 import gametrack.back.controllers.JogoController;
 import gametrack.back.controllers.SessaoController;
 import gametrack.back.controllers.UsuarioController;
-import gametrack.back.repositories.JogoRepository;
 import gametrack.back.repositories.JogoRepositoryJdbc;
 import gametrack.back.repositories.UsuarioRepository;
 import gametrack.back.repositories.UsuarioRepositoryJdbc;
@@ -33,6 +32,7 @@ import java.util.logging.Logger;
  *
  * @see RF001
  * @see RF002
+ * @see RF003
  * @see RF004
  */
 public final class Servidor {
@@ -77,9 +77,9 @@ public final class Servidor {
 
     private static JogoRoutes montarRotasDeJogo(
             Connection conexao, VerificadorAutenticacao verificador) {
-        JogoRepository repositorio = new JogoRepositoryJdbc(conexao);
-        JogoController controller = new JogoController(new JogoService(repositorio));
-        return new JogoRoutes(controller, verificador);
+        JogoService service = new JogoService(
+                new JogoRepositoryJdbc(conexao), new UsuarioRepositoryJdbc(conexao));
+        return new JogoRoutes(new JogoController(service), verificador);
     }
 
     private static SessaoRoutes montarRotasDeSessao(
