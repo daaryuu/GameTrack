@@ -1,14 +1,11 @@
 package gametrack.back.routes;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonParseException;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import gametrack.back.config.Mensagens;
 import gametrack.back.controllers.UsuarioController;
 import gametrack.back.model.CadastroUsuarioDTO;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 /**
  * Registra e trata as rotas HTTP de conta. O cadastro não exige autenticação.
@@ -25,7 +22,6 @@ public class UsuarioRoutes {
     private static final String METODO_POST = "POST";
 
     private final UsuarioController usuarioController;
-    private final Gson gson;
 
     /**
      * Constrói o gerenciador de rotas de conta.
@@ -34,7 +30,6 @@ public class UsuarioRoutes {
      */
     public UsuarioRoutes(UsuarioController usuarioController) {
         this.usuarioController = usuarioController;
-        this.gson = new Gson();
     }
 
     /**
@@ -53,18 +48,11 @@ public class UsuarioRoutes {
             return;
         }
         try {
-            String mensagem = usuarioController.cadastrarConta(lerDados(troca));
+            String mensagem = usuarioController.cadastrarConta(
+                    RequisicaoJson.ler(troca, CadastroUsuarioDTO.class));
             RespostaHttp.enviarMensagem(troca, RespostaHttp.STATUS_CRIADO, mensagem);
-        } catch (JsonParseException e) {
-            RespostaHttp.enviarMensagem(troca, RespostaHttp.STATUS_REQUISICAO_INVALIDA,
-                    Mensagens.CORPO_INVALIDO);
         } catch (RuntimeException e) {
             RespostaHttp.enviarFalha(troca, e);
         }
-    }
-
-    private CadastroUsuarioDTO lerDados(HttpExchange troca) throws IOException {
-        String corpo = new String(troca.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-        return gson.fromJson(corpo, CadastroUsuarioDTO.class);
     }
 }
