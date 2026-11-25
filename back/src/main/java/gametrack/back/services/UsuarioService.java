@@ -3,8 +3,10 @@ package gametrack.back.services;
 import gametrack.back.config.Mensagens;
 import gametrack.back.model.CadastroUsuarioDTO;
 import gametrack.back.model.Usuario;
+import gametrack.back.repositories.RegistroDuplicadoException;
 import gametrack.back.repositories.UsuarioRepository;
 import gametrack.back.seguranca.CriptografiaSenha;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Executa as regras de negócio referentes ao cadastro e gerenciamento de contas.
@@ -46,14 +48,31 @@ public class UsuarioService {
         verificarDisponibilidadeApelido(apelidoLimpo);
         String senhaHash = criptografiaSenha.gerarHash(dados.senha());
         Usuario novoUsuario = new Usuario(null, apelidoLimpo, senhaHash);
-        return usuarioRepository.inserir(novoUsuario);
+        return inserir(novoUsuario);
+    }
+
+    private Usuario inserir(Usuario usuario) {
+        try {
+            return usuarioRepository.inserir(usuario);
+        } catch (RegistroDuplicadoException e) {
+            // Outra requisição pode ter usado o apelido depois da verificação (RF001.1).
+            throw new NegocioException(Mensagens.APELIDO_JA_UTILIZADO);
+        }
     }
 
     private void validarDadosObrigatorios(CadastroUsuarioDTO dados) {
         if (dados == null || dados.apelido() == null || dados.apelido().isBlank()) {
             throw new NegocioException(Mensagens.APELIDO_NAO_INFORMADO);
         }
+        validarTamanhoApelido(dados.apelido().trim());
         validarSenha(dados.senha());
+    }
+
+    private void validarTamanhoApelido(String apelido) {
+        if (apelido.length() < Mensagens.TAMANHO_MINIMO_APELIDO
+                || apelido.length() > Mensagens.TAMANHO_MAXIMO_APELIDO) {
+            throw new NegocioException(Mensagens.APELIDO_TAMANHO_INVALIDO);
+        }
     }
 
     private void validarSenha(String senha) {
@@ -62,6 +81,10 @@ public class UsuarioService {
         }
         if (senha.length() < Mensagens.TAMANHO_MINIMO_SENHA) {
             throw new NegocioException(Mensagens.SENHA_TAMANHO_INVALIDO);
+        }
+        if (senha.getBytes(StandardCharsets.UTF_8).length
+                > Mensagens.TAMANHO_MAXIMO_SENHA_BYTES) {
+            throw new NegocioException(Mensagens.SENHA_MUITO_LONGA);
         }
     }
 

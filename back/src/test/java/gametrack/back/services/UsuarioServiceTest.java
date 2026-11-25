@@ -7,7 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import gametrack.back.config.Mensagens;
 import gametrack.back.model.CadastroUsuarioDTO;
 import gametrack.back.model.Usuario;
+import gametrack.back.repositories.RegistroDuplicadoException;
 import gametrack.back.repositories.UsuarioRepository;
+import gametrack.back.seguranca.BcryptCriptografiaSenha;
 import gametrack.back.seguranca.CriptografiaSenha;
 import java.util.ArrayList;
 import java.util.List;
@@ -84,6 +86,60 @@ public class UsuarioServiceTest {
 
         NegocioException erro = assertThrows(
                 NegocioException.class, () -> usuarioService.cadastrar(duplicado));
+        assertEquals(Mensagens.APELIDO_JA_UTILIZADO, erro.getMessage());
+    }
+
+    /**
+     * Garante o tamanho do apelido definido no dicionário de dados (3 a 30 caracteres).
+     */
+    @Test
+    public void deveLancarExcecaoQuandoApelidoTiverTamanhoInvalido() {
+        for (String apelido : List.of(" ab ", "a".repeat(31))) {
+            NegocioException erro = assertThrows(NegocioException.class,
+                    () -> usuarioService.cadastrar(
+                            new CadastroUsuarioDTO(apelido, "senha1234")));
+            assertEquals(Mensagens.APELIDO_TAMANHO_INVALIDO, erro.getMessage());
+        }
+    }
+
+    /**
+     * Garante que o limite de senha aceito pelo serviço é o mesmo da biblioteca bcrypt,
+     * contado em bytes (cada "é" ocupa 2).
+     */
+    @Test
+    public void deveRespeitarOLimiteDeSenhaDoBcrypt() {
+        usuarioService = new UsuarioService(
+                new UsuarioRepositoryFalso(), new BcryptCriptografiaSenha());
+
+        assertNotNull(usuarioService.cadastrar(
+                new CadastroUsuarioDTO("pedro", "a".repeat(71))).getId());
+        for (String senha : List.of("a".repeat(72), "é".repeat(36))) {
+            NegocioException erro = assertThrows(NegocioException.class,
+                    () -> usuarioService.cadastrar(new CadastroUsuarioDTO("maria", senha)));
+            assertEquals(Mensagens.SENHA_MUITO_LONGA, erro.getMessage());
+        }
+    }
+
+    /**
+     * Garante a mensagem do RF001.1 quando o apelido é usado entre a verificação e a inserção.
+     */
+    @Test
+    public void deveInformarApelidoEmUsoQuandoOBancoRecusarDuplicado() {
+        UsuarioRepository repositorio = new UsuarioRepository() {
+            @Override
+            public boolean existePorApelido(String apelido) {
+                return false;
+            }
+
+            @Override
+            public Usuario inserir(Usuario usuario) {
+                throw new RegistroDuplicadoException(new RuntimeException("duplicado"));
+            }
+        };
+        usuarioService = new UsuarioService(repositorio, senha -> "hash");
+
+        NegocioException erro = assertThrows(NegocioException.class,
+                () -> usuarioService.cadastrar(new CadastroUsuarioDTO("pedro", "senha1234")));
         assertEquals(Mensagens.APELIDO_JA_UTILIZADO, erro.getMessage());
     }
 

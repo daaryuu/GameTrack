@@ -2,9 +2,6 @@ package gametrack.back.controllers;
 
 import gametrack.back.config.Mensagens;
 import gametrack.back.model.CadastroUsuarioDTO;
-import gametrack.back.model.Usuario;
-import gametrack.back.repositories.PersistenciaException;
-import gametrack.back.services.NegocioException;
 import gametrack.back.services.UsuarioService;
 
 /**
@@ -26,17 +23,14 @@ public class UsuarioController {
     }
 
     /**
-     * Processa a solicitação de cadastro de uma nova conta.
+     * Processa a solicitação de cadastro de uma nova conta. As exceções do serviço seguem para
+     * a rota, que escolhe o status HTTP.
      *
      * @param dados DTO contendo apelido e senha
-     * @return mensagem de sucesso ou erro correspondente ao fluxo executado
+     * @return mensagem de sucesso
      */
     public String cadastrarConta(CadastroUsuarioDTO dados) {
-        try {
-            Usuario criado = usuarioService.cadastrar(dados);
-            return Mensagens.CONTA_CADASTRADA_SUCESSO + " ID: " + criado.getId();
-        } catch (NegocioException | PersistenciaException e) {
-            return e.getMessage();
-        }
+        usuarioService.cadastrar(dados);
+        return Mensagens.CONTA_CADASTRADA_SUCESSO;
     }
 }
