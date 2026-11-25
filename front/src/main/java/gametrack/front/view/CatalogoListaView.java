@@ -1,6 +1,7 @@
 package gametrack.front.view;
 
 import gametrack.front.cliente.JogoCliente;
+import gametrack.front.cliente.NaoAutenticadoException;
 import gametrack.front.componentes.BotaoArredondado;
 import gametrack.front.componentes.BotaoLink;
 import gametrack.front.componentes.CaixaOpcoes;
@@ -73,6 +74,7 @@ public class CatalogoListaView extends JPanel {
     private final BotaoArredondado botaoBiblioteca =
             new BotaoArredondado("Minha biblioteca", Tema.FUNDO_BOTAO_SECUNDARIO);
     private final TabelaJogos tabela = new TabelaJogos(modeloTabela);
+    private Runnable aoExpirarSessao = () -> { };
     private int totalCatalogo;
 
     /**
@@ -99,6 +101,15 @@ public class CatalogoListaView extends JPanel {
      */
     public void definirAoAbrirBiblioteca(Runnable acao) {
         botaoBiblioteca.addActionListener(evento -> acao.run());
+    }
+
+    /**
+     * Define o que acontece quando o servidor não reconhece mais a sessão (RNF007).
+     *
+     * @param acao ação a executar, como voltar ao login
+     */
+    public void definirAoExpirarSessao(Runnable acao) {
+        this.aoExpirarSessao = acao;
     }
 
     /**
@@ -279,6 +290,14 @@ public class CatalogoListaView extends JPanel {
         return exibidos == 1 ? "1 jogo encontrado" : exibidos + " jogos encontrados";
     }
 
+    private void tratarErro(Throwable causa) {
+        if (causa instanceof NaoAutenticadoException) {
+            aoExpirarSessao.run();
+        } else {
+            exibirErro(causa.getMessage());
+        }
+    }
+
     private void exibirErro(String texto) {
         JOptionPane.showMessageDialog(this, texto, TITULO_ERRO, JOptionPane.ERROR_MESSAGE);
     }
@@ -319,7 +338,7 @@ public class CatalogoListaView extends JPanel {
             try {
                 exibirJogos(get(), filtro);
             } catch (ExecutionException e) {
-                exibirErro(e.getCause().getMessage());
+                tratarErro(e.getCause());
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
