@@ -18,6 +18,11 @@ public final class Mensagens {
     public static final int TAMANHO_MAXIMO_APELIDO = 30;
     public static final int TIMEOUT_BANCO_SEGUNDOS = 5;
     public static final int LIMITE_MAXIMO_CATALOGO = 500;
+    public static final int TAMANHO_MAXIMO_TITULO = 100;
+    public static final int TAMANHO_MAXIMO_GENERO = 40;
+    public static final int TAMANHO_MAXIMO_DESENVOLVEDORA = 80;
+    public static final int ANO_MINIMO_JOGO = 1950;
+    public static final int ANO_MAXIMO_JOGO = 2100;
     public static final String APELIDO_ADMINISTRADOR = "admin";
 
     public static final String CONTA_CADASTRADA_SUCESSO = "Conta cadastrada com sucesso!";
@@ -35,6 +40,14 @@ public final class Mensagens {
 
     public static final String CREDENCIAIS_INCORRETAS = "Apelido ou senha incorretos!";
     public static final String USUARIO_NAO_AUTENTICADO = "Usuário não autenticado.";
+    public static final String EXCLUSIVO_ADMINISTRADOR =
+            "Operação exclusiva do administrador.";
+    public static final String JOGO_CADASTRADO_SUCESSO = "Jogo cadastrado com sucesso!";
+    public static final String JOGO_DADOS_NAO_INFORMADOS = "Informe todos os dados do jogo!";
+    public static final String JOGO_DADOS_LONGOS =
+            "Use no máximo 100 caracteres no título, 40 no gênero e 80 na desenvolvedora!";
+    public static final String JOGO_ANO_INVALIDO =
+            "O ano de lançamento deve estar entre 1950 e 2100!";
     public static final String ANO_FILTRO_INVALIDO =
             "O ano informado no filtro deve ser numérico.";
     public static final String PARAMETROS_INVALIDOS = "Os parâmetros da consulta são inválidos.";

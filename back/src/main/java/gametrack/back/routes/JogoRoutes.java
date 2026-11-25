@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import gametrack.back.config.Mensagens;
 import gametrack.back.controllers.JogoController;
+import gametrack.back.model.DadosJogoDTO;
 import gametrack.back.model.FiltroJogoDTO;
 import gametrack.back.model.JogoDTO;
 import gametrack.back.seguranca.VerificadorAutenticacao;
@@ -17,10 +18,12 @@ import java.util.Map;
 
 /**
  * Registra e trata as rotas HTTP do catálogo de jogos.
- * Respostas: 200 com a lista (vazia quando nada atende ao filtro), 400 para parâmetros ou
- * filtro inválidos, 401 sem autenticação, 405 para métodos diferentes de GET e 500 para
- * falhas no banco ou inesperadas. Os erros vêm como {@code {"mensagem": "..."}}.
+ * O GET responde 200 com a lista (vazia quando nada atende ao filtro), e o POST, exclusivo do
+ * administrador, responde 201 quando o jogo é cadastrado. Os erros são 400 para dados
+ * inválidos, 401 sem autenticação, 403 sem permissão, 405 para outros métodos e 500 para
+ * falhas no banco ou inesperadas, sempre como {@code {"mensagem": "..."}}.
  *
+ * @see RF003
  * @see RF004
  * @see RF004.1
  * @see RNF003
@@ -29,6 +32,7 @@ public class JogoRoutes {
 
     private static final String CAMINHO_JOGOS = "/jogos";
     private static final String METODO_GET = "GET";
+    private static final String METODO_POST = "POST";
     private static final String CABECALHO_AUTH = "Authorization";
 
     private final JogoController jogoController;
@@ -56,13 +60,13 @@ public class JogoRoutes {
     }
 
     private void tratarRequisicao(HttpExchange troca) throws IOException {
-        if (!METODO_GET.equalsIgnoreCase(troca.getRequestMethod())) {
-            RespostaHttp.enviarMensagem(troca, RespostaHttp.STATUS_METODO_NAO_PERMITIDO,
-                    Mensagens.METODO_NAO_PERMITIDO);
-            return;
-        }
         try {
-            RespostaHttp.enviarJson(troca, RespostaHttp.STATUS_OK, listarJogos(troca));
+            switch (troca.getRequestMethod()) {
+                case METODO_GET -> listarJogos(troca);
+                case METODO_POST -> cadastrarJogo(troca);
+                default -> RespostaHttp.enviarMensagem(troca,
+                        RespostaHttp.STATUS_METODO_NAO_PERMITIDO, Mensagens.METODO_NAO_PERMITIDO);
+            }
         } catch (IllegalArgumentException e) {
             RespostaHttp.enviarMensagem(troca, RespostaHttp.STATUS_REQUISICAO_INVALIDA,
                     Mensagens.PARAMETROS_INVALIDOS);
@@ -71,10 +75,23 @@ public class JogoRoutes {
         }
     }
 
-    private List<JogoDTO> listarJogos(HttpExchange troca) {
+    private void listarJogos(HttpExchange troca) throws IOException {
+        List<JogoDTO> jogos = jogoController.listarJogos(
+                exigirUsuario(troca), extrairFiltro(troca.getRequestURI()));
+        RespostaHttp.enviarJson(troca, RespostaHttp.STATUS_OK, jogos);
+    }
+
+    private void cadastrarJogo(HttpExchange troca) throws IOException {
+        // A autenticação vem antes da leitura, para não ler dados de quem não entrou.
+        Integer usuarioId = exigirUsuario(troca);
+        String mensagem = jogoController.cadastrarJogo(
+                usuarioId, RequisicaoJson.ler(troca, DadosJogoDTO.class));
+        RespostaHttp.enviarMensagem(troca, RespostaHttp.STATUS_CRIADO, mensagem);
+    }
+
+    private Integer exigirUsuario(HttpExchange troca) {
         String credencial = troca.getRequestHeaders().getFirst(CABECALHO_AUTH);
-        Integer usuarioId = verificadorAutenticacao.exigirUsuarioAutenticado(credencial);
-        return jogoController.listarJogos(usuarioId, extrairFiltro(troca.getRequestURI()));
+        return verificadorAutenticacao.exigirUsuarioAutenticado(credencial);
     }
 
     private FiltroJogoDTO extrairFiltro(URI uri) {

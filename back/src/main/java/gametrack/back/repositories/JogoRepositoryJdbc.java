@@ -23,6 +23,9 @@ public class JogoRepositoryJdbc implements JogoRepository {
             "SELECT id, titulo, genero, desenvolvedora, ano FROM Jogo WHERE 1 = 1";
     private static final String CLAUSULA_ORDEM_LIMITE = " ORDER BY titulo ASC LIMIT ?";
 
+    private static final String SQL_INSERIR =
+            "INSERT INTO Jogo (titulo, genero, desenvolvedora, ano) VALUES (?, ?, ?, ?)";
+
     private final Connection conexao;
 
     /**
@@ -53,6 +56,23 @@ public class JogoRepositoryJdbc implements JogoRepository {
             stmt.setQueryTimeout(Mensagens.TIMEOUT_BANCO_SEGUNDOS);
             preencherParametros(stmt, parametros);
             return lerResultados(stmt);
+        } catch (SQLException e) {
+            throw new PersistenciaException(e);
+        }
+    }
+
+    /**
+     * Grava o jogo no catálogo.
+     *
+     * @param jogo jogo já validado
+     */
+    @Override
+    public void inserir(Jogo jogo) {
+        try (PreparedStatement stmt = conexao.prepareStatement(SQL_INSERIR)) {
+            stmt.setQueryTimeout(Mensagens.TIMEOUT_BANCO_SEGUNDOS);
+            preencherParametros(stmt, List.of(jogo.getTitulo(), jogo.getGenero(),
+                    jogo.getDesenvolvedora(), jogo.getAno()));
+            stmt.executeUpdate();
         } catch (SQLException e) {
             throw new PersistenciaException(e);
         }

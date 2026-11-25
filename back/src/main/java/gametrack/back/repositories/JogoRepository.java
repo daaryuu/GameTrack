@@ -6,6 +6,7 @@ import java.util.List;
 /**
  * Contrato de acesso aos dados do catálogo global de jogos.
  *
+ * @see RF003
  * @see RF004
  * @see RF004.1
  * @see RNF004
@@ -22,4 +23,11 @@ public interface JogoRepository {
      * @return lista de jogos compatíveis ordenada por título
      */
     List<Jogo> listarComFiltros(String titulo, String genero, String desenvolvedora, Integer ano);
+
+    /**
+     * Insere um jogo no catálogo.
+     *
+     * @param jogo jogo já validado, sem identificador
+     */
+    void inserir(Jogo jogo);
 }

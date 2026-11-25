@@ -7,7 +7,8 @@ import com.sun.net.httpserver.HttpServer;
 import gametrack.back.config.Mensagens;
 import gametrack.back.controllers.JogoController;
 import gametrack.back.model.Jogo;
-import gametrack.back.repositories.JogoRepository;
+import gametrack.back.model.Perfil;
+import gametrack.back.repositories.JogoRepositoryFalso;
 import gametrack.back.repositories.PersistenciaException;
 import gametrack.back.seguranca.AutenticacaoException;
 import gametrack.back.seguranca.SessoesEmMemoria;
@@ -22,6 +23,7 @@ import java.net.http.HttpResponse;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -29,6 +31,7 @@ import org.junit.jupiter.api.Test;
  * Testes das rotas do catálogo com um servidor HTTP real, em porta livre, e repository falso.
  * Conferem o contrato combinado com o front: códigos de status e formato das respostas.
  *
+ * @see RF003
  * @see RF004
  * @see RNF003
  */
@@ -37,7 +40,12 @@ class JogoRoutesTest {
     private static final int PORTA_LIVRE = 0;
     private static final Jogo PORTAL = new Jogo(5, "Portal 2", "Quebra-cabeça", "Valve", 2011);
 
+    private static final int ADMINISTRADOR_ID = 1;
+    private static final String JOGO_VALIDO = "{\"titulo\":\"T\",\"genero\":\"Ação\","
+            + "\"desenvolvedora\":\"D\",\"ano\":2018}";
+
     private HttpServer servidor;
+    private JogoRepositoryFalso repositorio;
 
     @AfterEach
     void pararServidor() {
@@ -98,10 +106,53 @@ class JogoRoutesTest {
     }
 
     @Test
-    void deveResponder405ParaMetodoDiferenteDeGet()throws Exception {
+    void deveResponder201QuandoOAdministradorCadastraUmJogo() throws Exception {
+        iniciar((t, g, d, a) -> List.of(), credencial -> ADMINISTRADOR_ID);
+
+        HttpResponse<String> resposta = post(JOGO_VALIDO);
+
+        assertEquals(201, resposta.statusCode());
+        assertTrue(resposta.body().contains(Mensagens.JOGO_CADASTRADO_SUCESSO));
+        assertEquals("Ação", repositorio.inseridos().get(0).getGenero());
+    }
+
+    @Test
+    void deveResponder403QuandoUmUsuarioComumCadastraUmJogo() throws Exception {
+        iniciar((t, g, d, a) -> List.of(), credencial -> 2);
+
+        HttpResponse<String> resposta = post(JOGO_VALIDO);
+
+        assertEquals(403, resposta.statusCode());
+        assertTrue(resposta.body().contains(Mensagens.EXCLUSIVO_ADMINISTRADOR));
+        assertTrue(repositorio.inseridos().isEmpty());
+    }
+
+    @Test
+    void deveResponder401NoCadastroSemAutenticacao() throws Exception {
+        iniciar((t, g, d, a) -> List.of(), credencial -> {
+            throw new AutenticacaoException();
+        });
+
+        assertEquals(401, post(JOGO_VALIDO).statusCode());
+        assertTrue(repositorio.inseridos().isEmpty());
+    }
+
+    @Test
+    void deveResponder400ParaDadosInvalidosNoCadastro() throws Exception {
+        iniciar((t, g, d, a) -> List.of(), credencial -> ADMINISTRADOR_ID);
+
+        assertTrue(post("").body().contains(Mensagens.JOGO_DADOS_NAO_INFORMADOS));
+        assertTrue(post("{\"titulo\":").body().contains(Mensagens.CORPO_INVALIDO));
+        HttpResponse<String> anoEmTexto = post(JOGO_VALIDO.replace("2018", "\"20a\""));
+        assertEquals(400, anoEmTexto.statusCode());
+        assertTrue(anoEmTexto.body().contains(Mensagens.CORPO_INVALIDO));
+    }
+
+    @Test
+    void deveResponder405ParaOutrosMetodos() throws Exception {
         iniciar((t, g, d, a) -> List.of(), credencial -> 1);
         HttpRequest requisicao = HttpRequest.newBuilder(uri("/jogos"))
-                .POST(HttpRequest.BodyPublishers.noBody())
+                .method("PATCH", HttpRequest.BodyPublishers.noBody())
                 .build();
 
         HttpResponse<String> resposta = enviar(requisicao);
@@ -134,10 +185,13 @@ class JogoRoutesTest {
         assertTrue(resposta.body().contains(Mensagens.ERRO_INESPERADO));
     }
 
-    private void iniciar(JogoRepository repositorio, VerificadorAutenticacao verificador)
+    private void iniciar(JogoRepositoryFalso.Listagem listagem, VerificadorAutenticacao verificador)
             throws IOException {
         servidor = HttpServer.create(new InetSocketAddress("localhost", PORTA_LIVRE), 0);
-        JogoController controller = new JogoController(new JogoService(repositorio));
+        repositorio = new JogoRepositoryFalso(listagem);
+        JogoService service = new JogoService(repositorio, id -> Optional.of(
+                id == ADMINISTRADOR_ID ? Perfil.ADMINISTRADOR : Perfil.USUARIO));
+        JogoController controller = new JogoController(service);
         new JogoRoutes(controller, verificador).registrar(servidor);
         servidor.start();
     }
@@ -148,6 +202,11 @@ class JogoRoutesTest {
 
     private HttpResponse<String> get(String caminho) throws Exception {
         return enviar(HttpRequest.newBuilder(uri(caminho)).GET().build());
+    }
+
+    private HttpResponse<String> post(String corpo) throws Exception {
+        return enviar(HttpRequest.newBuilder(uri("/jogos"))
+                .POST(HttpRequest.BodyPublishers.ofString(corpo)).build());
     }
 
     private HttpResponse<String> getComCredencial(String credencial) throws Exception {
