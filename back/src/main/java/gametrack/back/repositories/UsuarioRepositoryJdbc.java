@@ -17,6 +17,8 @@ import java.sql.Statement;
  */
 public class UsuarioRepositoryJdbc implements UsuarioRepository {
 
+    /** Código do MySQL para violação de chave única (ER_DUP_ENTRY). */
+    private static final int ERRO_CHAVE_DUPLICADA = 1062;
     private static final String SQL_EXISTE_APELIDO =
             "SELECT 1 FROM Usuario WHERE apelido = ? LIMIT 1";
     private static final String SQL_INSERIR_USUARIO =
@@ -67,8 +69,14 @@ public class UsuarioRepositoryJdbc implements UsuarioRepository {
             usuario.setId(extrairIdGerado(stmt));
             return usuario;
         } catch (SQLException e) {
-            throw new PersistenciaException(e);
+            throw converterErroDeInsercao(e);
         }
+    }
+
+    private PersistenciaException converterErroDeInsercao(SQLException erro) {
+        return erro.getErrorCode() == ERRO_CHAVE_DUPLICADA
+                ? new RegistroDuplicadoException(erro)
+                : new PersistenciaException(erro);
     }
 
     private void configurarParametrosInsercao(PreparedStatement stmt, Usuario usuario)
