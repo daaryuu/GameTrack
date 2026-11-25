@@ -23,6 +23,7 @@ public final class ConexaoHttp {
     private static final String CABECALHO_TIPO = "Content-Type";
     private static final String TIPO_JSON = "application/json; charset=UTF-8";
     private static final int STATUS_SUCESSO_MAXIMO = 299;
+    private static final int STATUS_NAO_AUTENTICADO = 401;
     private static final Duration TEMPO_LIMITE = Duration.ofSeconds(10);
     private static final String MENSAGEM_SEM_CONEXAO = "Não foi possível conectar ao servidor!";
     private static final String MENSAGEM_ERRO = "Erro inesperado no servidor!";
@@ -101,6 +102,9 @@ public final class ConexaoHttp {
     }
 
     private void verificarStatus(HttpResponse<String> resposta) {
+        if (resposta.statusCode() == STATUS_NAO_AUTENTICADO) {
+            throw new NaoAutenticadoException(extrairMensagem(resposta.body()));
+        }
         if (resposta.statusCode() > STATUS_SUCESSO_MAXIMO) {
             throw new ErroServidorException(extrairMensagem(resposta.body()));
         }
