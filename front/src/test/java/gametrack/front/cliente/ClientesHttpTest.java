@@ -104,6 +104,16 @@ class ClientesHttpTest {
     }
 
     @Test
+    void deveDistinguirAFaltaDeAutenticacaoDosOutrosErros() {
+        preparar(401, "{\"mensagem\":\"Usuário não autenticado.\"}");
+
+        NaoAutenticadoException erro = assertThrows(NaoAutenticadoException.class,
+                () -> jogos.listar(FiltroJogoDTO.semFiltro()));
+
+        assertEquals("Usuário não autenticado.", erro.getMessage());
+    }
+
+    @Test
     void deveRecusarLoginSemToken() {
         for (String corpo : List.of("", "{}", "{\"token\":\"\"}")) {
             preparar(201, corpo);

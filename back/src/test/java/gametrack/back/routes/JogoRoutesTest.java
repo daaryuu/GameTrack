@@ -10,6 +10,7 @@ import gametrack.back.model.Jogo;
 import gametrack.back.repositories.JogoRepository;
 import gametrack.back.repositories.PersistenciaException;
 import gametrack.back.seguranca.AutenticacaoException;
+import gametrack.back.seguranca.SessoesEmMemoria;
 import gametrack.back.seguranca.VerificadorAutenticacao;
 import gametrack.back.services.JogoService;
 import java.io.IOException;
@@ -18,6 +19,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Clock;
+import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -84,7 +87,18 @@ class JogoRoutesTest {
     }
 
     @Test
-    void deveResponder405ParaMetodoDiferenteDeGet() throws Exception {
+    void deveExigirOTokenDeUmaSessaoAberta() throws Exception {
+        SessoesEmMemoria sessoes =
+                new SessoesEmMemoria(Duration.ofMinutes(30), Clock.systemUTC());
+        iniciar((t, g, d, a) -> List.of(PORTAL), sessoes);
+
+        assertEquals(401, get("/jogos").statusCode());
+        assertEquals(401, getComCredencial("Bearer inventado").statusCode());
+        assertEquals(200, getComCredencial("Bearer " + sessoes.abrir(1)).statusCode());
+    }
+
+    @Test
+    void deveResponder405ParaMetodoDiferenteDeGet()throws Exception {
         iniciar((t, g, d, a) -> List.of(), credencial -> 1);
         HttpRequest requisicao = HttpRequest.newBuilder(uri("/jogos"))
                 .POST(HttpRequest.BodyPublishers.noBody())
@@ -134,6 +148,11 @@ class JogoRoutesTest {
 
     private HttpResponse<String> get(String caminho) throws Exception {
         return enviar(HttpRequest.newBuilder(uri(caminho)).GET().build());
+    }
+
+    private HttpResponse<String> getComCredencial(String credencial) throws Exception {
+        return enviar(HttpRequest.newBuilder(uri("/jogos"))
+                .header("Authorization", credencial).GET().build());
     }
 
     private HttpResponse<String> enviar(HttpRequest requisicao) throws Exception {

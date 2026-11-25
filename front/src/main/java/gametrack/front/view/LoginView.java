@@ -72,6 +72,16 @@ public class LoginView extends JPanel {
         formulario.exibirSucesso(texto);
     }
 
+    /**
+     * Limpa o formulário e exibe uma mensagem de erro, como a de sessão expirada.
+     *
+     * @param texto mensagem exibida
+     */
+    public void exibirErro(String texto) {
+        formulario.limpar();
+        formulario.exibirErro(texto);
+    }
+
     private JPanel criarConteudo() {
         JPanel conteudo = new JPanel();
         conteudo.setOpaque(false);
