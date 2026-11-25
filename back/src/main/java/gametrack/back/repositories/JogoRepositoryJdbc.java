@@ -8,7 +8,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Implementação JDBC do repositório de jogos do catálogo para MySQL.
@@ -26,11 +25,6 @@ public class JogoRepositoryJdbc implements JogoRepository {
 
     private static final String SQL_INSERIR =
             "INSERT INTO Jogo (titulo, genero, desenvolvedora, ano) VALUES (?, ?, ?, ?)";
-
-    private static final String SQL_BUSCAR_POR_ID =
-            "SELECT id, titulo, genero, desenvolvedora, ano FROM Jogo WHERE id = ?";
-    private static final String SQL_ATUALIZAR =
-            "UPDATE Jogo SET titulo = ?, genero = ?, desenvolvedora = ?, ano = ? WHERE id = ?";
 
     private final Connection conexao;
 
@@ -79,42 +73,6 @@ public class JogoRepositoryJdbc implements JogoRepository {
             preencherParametros(stmt, List.of(jogo.getTitulo(), jogo.getGenero(),
                     jogo.getDesenvolvedora(), jogo.getAno()));
             stmt.executeUpdate();
-        } catch (SQLException e) {
-            throw new PersistenciaException(e);
-        }
-    }
-
-    /**
-     * Busca o jogo no banco.
-     *
-     * @param id identificador do jogo
-     * @return jogo encontrado ou vazio
-     */
-    @Override
-    public Optional<Jogo> buscarPorId(int id) {
-        try (PreparedStatement stmt = conexao.prepareStatement(SQL_BUSCAR_POR_ID)) {
-            stmt.setQueryTimeout(Mensagens.TIMEOUT_BANCO_SEGUNDOS);
-            stmt.setInt(1, id);
-            return lerResultados(stmt).stream().findFirst();
-        } catch (SQLException e) {
-            throw new PersistenciaException(e);
-        }
-    }
-
-    /**
-     * Atualiza o jogo no banco. O driver conta as linhas encontradas, então salvar os mesmos
-     * dados também conta como atualização.
-     *
-     * @param jogo jogo já validado, com identificador
-     * @return verdadeiro se o jogo existia
-     */
-    @Override
-    public boolean atualizar(Jogo jogo) {
-        try (PreparedStatement stmt = conexao.prepareStatement(SQL_ATUALIZAR)) {
-            stmt.setQueryTimeout(Mensagens.TIMEOUT_BANCO_SEGUNDOS);
-            preencherParametros(stmt, List.of(jogo.getTitulo(), jogo.getGenero(),
-                    jogo.getDesenvolvedora(), jogo.getAno(), jogo.getId()));
-            return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new PersistenciaException(e);
         }
