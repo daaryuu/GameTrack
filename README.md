@@ -2,7 +2,7 @@
 
 Sistema usado para registrar jogos zerados, platinados ou sendo jogados pelo usuário. Também permite organizar os jogos em bibliotecas e escrever reviews sobre os mesmos.
 
-> **Status:** projeto em desenvolvimento. A especificação e o projeto estão documentados, e a implementação está em andamento, a começar pelo CRUD do catálogo de jogos.
+> **Status:** projeto em desenvolvimento. As contas (cadastro e login) e o CRUD do catálogo de jogos estão implementados. A próxima etapa é a biblioteca do usuário.
 
 ## 1. Contexto do Problema e Solução
 
@@ -17,8 +17,14 @@ O GameTrack busca solucionar esses problemas ao oferecer uma biblioteca única, 
 O sistema tem um **catálogo global** de jogos, mantido pelo administrador e compartilhado por todos os usuários. Cada usuário monta a sua **biblioteca** escolhendo jogos do catálogo e informando a plataforma em que joga.
 
 ### 1.3 Funcionalidades
-- Criar uma conta e se autenticar
-- Manter o catálogo de jogos (cadastrar, consultar, alterar e excluir), função do administrador
+
+Já disponíveis:
+- Criar uma conta e se autenticar (RF001 e RF002)
+- Consultar e filtrar o catálogo de jogos (RF004)
+- Cadastrar, alterar e excluir jogos do catálogo, função do administrador (RF003, RF005 e RF006)
+
+Planejadas:
+- Impedir, com uma mensagem própria, a exclusão de jogo que está em alguma biblioteca (RF006.1); o banco de dados já bloqueia essa exclusão
 - Montar a biblioteca pessoal com jogos do catálogo, informando a plataforma
 - Consultar, atualizar e excluir os itens da biblioteca
 - Organizar por plataforma, gênero e status
@@ -29,7 +35,28 @@ O sistema tem um **catálogo global** de jogos, mantido pelo administrador e com
 
 ## 2. Instruções para Uso
 
-_Em construção_
+O programa tem duas partes: o servidor, ligado ao banco de dados, e o aplicativo, que cada usuário abre. Para instalar e executar, veja as seções 3.2 e 3.3.
+
+### 2.1 Conta
+1. Na tela de login, clique em **Cadastre-se**.
+2. Escolha um nome de usuário (de 3 a 30 caracteres) e uma senha (no mínimo 8 caracteres) e clique em **Cadastrar**.
+3. De volta ao login, informe o nome de usuário e a senha e clique em **Entrar no GameTrack**.
+
+Depois de 30 minutos sem uso, a sessão expira e o programa pede um novo login.
+
+### 2.2 Catálogo de jogos
+Depois do login, o programa abre o catálogo. Use os filtros de título, gênero, desenvolvedora e ano e clique em **Filtrar**. Para ver todos os jogos de novo, clique em **Limpar filtros**.
+
+### 2.3 Administrador
+A conta `admin` é criada pelo servidor (seção 3.2) e tem, no catálogo, as ações de manutenção:
+
+| Ação | Como fazer |
+|---|---|
+| Cadastrar jogo | Clique em **Adicionar Jogo**, preencha todos os campos e clique em **Cadastrar jogo**. |
+| Alterar jogo | Clique em **Alterar jogo** na linha do jogo, mude os dados e clique em **Salvar alterações**. |
+| Excluir jogo | Clique no **X** na linha do jogo e confirme em **Excluir jogo**. A exclusão não pode ser desfeita. |
+
+> Os botões **Minha biblioteca** e **Ver detalhes** ainda não têm função.
 
 ## 3. Instruções para DEVs
 
@@ -40,13 +67,52 @@ _Em construção_
 - VSCode, com a extensão Extension Pack for Java
 
 ### 3.2 Configuração do ambiente
-1. Crie o banco e as tabelas: `mysql -u <usuario> -p < sql/01_criar_tabelas.sql`.
-2. Copie `back/src/main/resources/config.example.properties` para `back/src/main/resources/config.properties` e preencha o usuário e a senha do seu MySQL. O arquivo `config.properties` é ignorado pelo Git.
-3. Compile e rode os testes na raiz do projeto: `mvn clean package`.
+1. Crie o banco e as tabelas. O script pode ser executado de novo sem apagar dados.
+   - Git Bash, Linux ou macOS: `mysql -u <usuario> -p < sql/01_criar_tabelas.sql`
+   - PowerShell: `cmd /c "mysql -u <usuario> -p < sql\01_criar_tabelas.sql"`
+2. Copie `back/src/main/resources/config.example.properties` para `back/src/main/resources/config.properties`, que é ignorado pelo Git, e preencha:
 
-_As instruções de execução do servidor e da interface serão adicionadas junto com o código._
+   | Propriedade | Conteúdo |
+   |---|---|
+   | `db.url` | Endereço do banco |
+   | `db.usuario` e `db.senha` | Usuário e senha do seu MySQL |
+   | `admin.senha` | Senha inicial da conta `admin`, com no mínimo 8 caracteres |
+   | `servidor.porta` | Porta do servidor (8080 no modelo) |
+   | `sessao.expiracao.minutos` | Minutos sem uso até a sessão expirar (30 no modelo) |
 
-### 3.3 Como contribuir
+   O servidor cria a conta `admin` ao iniciar, se ela não existir. Mudar `admin.senha` depois não altera a senha da conta já criada.
+3. Compile e rode os testes na raiz do projeto: `mvn clean package`. Os testes não precisam do banco.
+
+### 3.3 Como executar
+Rode os comandos na raiz do projeto.
+
+1. Inicie o servidor e deixe o terminal aberto. Ele está pronto quando aparece `escutando na porta`, e é encerrado com Ctrl+C.
+   ```
+   mvn -q -pl back compile exec:java "-Dexec.mainClass=gametrack.back.Servidor"
+   ```
+2. Em outro terminal, abra o aplicativo, informando o endereço do servidor.
+   ```
+   mvn -q -pl front compile exec:java "-Dexec.mainClass=gametrack.front.Aplicacao" "-Dexec.args=http://localhost:8080"
+   ```
+
+Para ver as telas sem servidor nem banco, rode o segundo comando sem o `-Dexec.args`. Os dados ficam em memória e somem ao fechar. Nesse modo, a conta de administrador é `admin`, com a senha `admin1234`.
+
+### 3.4 Rotas do servidor
+Os dados são trocados em JSON. As mensagens de erro e as de sucesso das gravações vêm como `{"mensagem": "..."}`.
+
+| Método e rota | Função | Quem pode | Sucesso |
+|---|---|---|---|
+| `POST /usuarios` | Cadastrar conta (RF001) | Todos | 201 |
+| `POST /sessoes` | Autenticar; devolve `token` e `perfil` (RF002) | Todos | 201 |
+| `GET /jogos` | Listar jogos, com os filtros `titulo`, `genero`, `desenvolvedora` e `ano` (RF004) | Autenticado | 200 |
+| `POST /jogos` | Cadastrar jogo (RF003) | Administrador | 201 |
+| `GET /jogos/{id}` | Buscar um jogo | Autenticado | 200 |
+| `PUT /jogos/{id}` | Alterar jogo (RF005) | Administrador | 200 |
+| `DELETE /jogos/{id}` | Excluir jogo (RF006) | Administrador | 200 |
+
+As rotas de jogos exigem o cabeçalho `Authorization: Bearer <token>`. Os erros são 400 (dados inválidos), 401 (sem autenticação ou credenciais incorretas), 403 (sem permissão), 404 (jogo inexistente), 405 (método não permitido) e 500 (falha no servidor ou no banco). As sessões ficam na memória do servidor, então reiniciá-lo exige um novo login.
+
+### 3.5 Como contribuir
 O trabalho em equipe segue os padrões definidos na pasta [`Padrões Adotados`](Padrões%20Adotados):
 
 | Assunto | Resumo | Documento |
@@ -56,16 +122,22 @@ O trabalho em equipe segue os padrões definidos na pasta [`Padrões Adotados`](
 | Código | 10 regras de codificação: notação de nomes, Javadoc, métodos pequenos, SOLID, exceções, SQL parametrizado, entre outras. | [Padrões de Codificação](Padrões%20Adotados/Padrões%20de%20Codificação.md) |
 | Requisitos | Regras de verificação e análise aplicadas a cada requisito. | [Regras de Verificação e Análise de Requisitos](Padrões%20Adotados/Regras%20de%20Verificação%20e%20Análise%20de%20Requisitos.md) |
 
-### 3.4 Acompanhamento das tarefas
+### 3.6 Acompanhamento das tarefas
 As tarefas estão no quadro Kanban do projeto, na aba **Projects** do repositório. Cada tarefa é uma issue cujo nome começa com o código do requisito (por exemplo, `[RF003] Cadastrar jogo no catálogo`). A tarefa vai para **Desenvolvendo** ao ser iniciada, passa por **Teste de Sistema** e termina em **Finalizado**.
 
 ## 4. Tecnologias
 - Frontend:
   - Swing
 - Backend:
-  - Java 25
+  - Java 25, com o servidor HTTP do próprio JDK
+  - JDBC, com o MySQL Connector/J
+  - bcrypt, para o hash das senhas
 - Banco de Dados:
   - MySQL 9.7 LTS
+- Comunicação entre frontend e backend:
+  - HTTP e JSON, com o Gson
+- Build e testes:
+  - Maven e JUnit
 - IDE:
   - VSCode
 - Versionamento e gestão:
