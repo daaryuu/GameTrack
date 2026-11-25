@@ -2,7 +2,6 @@ package gametrack.back.repositories;
 
 import gametrack.back.model.Jogo;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Contrato de acesso aos dados do catálogo global de jogos.
@@ -10,7 +9,6 @@ import java.util.Optional;
  * @see RF003
  * @see RF004
  * @see RF004.1
- * @see RF005
  * @see RNF004
  */
 public interface JogoRepository {
@@ -32,20 +30,4 @@ public interface JogoRepository {
      * @param jogo jogo já validado, sem identificador
      */
     void inserir(Jogo jogo);
-
-    /**
-     * Busca um jogo pelo identificador.
-     *
-     * @param id identificador do jogo
-     * @return jogo encontrado, ou vazio se ele não existir
-     */
-    Optional<Jogo> buscarPorId(int id);
-
-    /**
-     * Atualiza os dados de um jogo.
-     *
-     * @param jogo jogo já validado, com identificador
-     * @return verdadeiro se o jogo existia e foi atualizado
-     */
-    boolean atualizar(Jogo jogo);
 }

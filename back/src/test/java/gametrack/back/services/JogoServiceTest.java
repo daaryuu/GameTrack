@@ -20,12 +20,11 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 /**
- * Testes unitários das regras de listagem, filtragem, cadastro e alteração do catálogo.
+ * Testes unitários das regras de negócio de listagem, filtragem e cadastro do catálogo.
  *
  * @see RF003
  * @see RF004
  * @see RF004.1
- * @see RF005
  */
 class JogoServiceTest {
 
@@ -163,44 +162,6 @@ class JogoServiceTest {
         cadastro.cadastrar(ADMINISTRADOR_ID, new DadosJogoDTO(
                 "t".repeat(100), "g".repeat(40), "d".repeat(80), 2100));
         assertEquals(2, repositorioCadastro.inseridos().size());
-    }
-
-    @Test
-    void deveBuscarJogoPorId() {
-        repositorioCadastro.definirGravado(HOLLOW_KNIGHT);
-
-        assertEquals("Hollow Knight", cadastro.buscarPorId(2, 1).titulo());
-        assertThrows(NaoEncontradoException.class, () -> cadastro.buscarPorId(2, 99));
-        assertThrows(AutenticacaoException.class, () -> cadastro.buscarPorId(null, 1));
-    }
-
-    @Test
-    void deveAlterarJogoMantendoOId() {
-        repositorioCadastro.definirGravado(HOLLOW_KNIGHT);
-
-        cadastro.alterar(ADMINISTRADOR_ID, 1, new DadosJogoDTO(" Novo ", "RPG", "Estúdio", 2020));
-
-        Jogo alterado = repositorioCadastro.buscarPorId(1).orElseThrow();
-        assertEquals("Novo", alterado.getTitulo());
-        assertEquals("RPG", alterado.getGenero());
-        assertEquals("Estúdio", alterado.getDesenvolvedora());
-        assertEquals(2020, alterado.getAno());
-    }
-
-    @Test
-    void deveRecusarAlteracaoSemPermissaoInvalidaOuDeJogoInexistente() {
-        repositorioCadastro.definirGravado(HOLLOW_KNIGHT);
-
-        assertThrows(PermissaoException.class, () -> cadastro.alterar(2, 1, jogo(2018)));
-        assertThrows(AutenticacaoException.class, () -> cadastro.alterar(null, 1, jogo(2018)));
-        assertThrows(NegocioException.class,
-                () -> cadastro.alterar(ADMINISTRADOR_ID, 1, jogo(null)));
-        assertThrows(NegocioException.class,
-                () -> cadastro.alterar(ADMINISTRADOR_ID, 1, jogo(1949)));
-        assertThrows(NaoEncontradoException.class,
-                () -> cadastro.alterar(ADMINISTRADOR_ID, 99, jogo(2018)));
-        assertEquals("Hollow Knight",
-                repositorioCadastro.buscarPorId(1).orElseThrow().getTitulo());
     }
 
     private void conferirRecusa(DadosJogoDTO dados, String mensagem) {
