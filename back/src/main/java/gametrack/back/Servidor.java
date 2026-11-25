@@ -4,11 +4,17 @@ import com.sun.net.httpserver.HttpServer;
 import gametrack.back.config.Configuracao;
 import gametrack.back.config.Mensagens;
 import gametrack.back.controllers.JogoController;
+import gametrack.back.controllers.UsuarioController;
 import gametrack.back.repositories.JogoRepository;
 import gametrack.back.repositories.JogoRepositoryJdbc;
+import gametrack.back.repositories.UsuarioRepository;
+import gametrack.back.repositories.UsuarioRepositoryJdbc;
 import gametrack.back.routes.JogoRoutes;
+import gametrack.back.routes.UsuarioRoutes;
+import gametrack.back.seguranca.BcryptCriptografiaSenha;
 import gametrack.back.seguranca.VerificadorAutenticacaoProvisorio;
 import gametrack.back.services.JogoService;
+import gametrack.back.services.UsuarioService;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.sql.Connection;
@@ -20,6 +26,7 @@ import java.util.logging.Logger;
  * Ponto de entrada do servidor do GameTrack. Lê o {@code config.properties}, conecta ao
  * MySQL, monta as camadas (repository, service, controller e rotas) e começa a escutar.
  *
+ * @see RF001
  * @see RF004
  */
 public final class Servidor {
@@ -42,7 +49,8 @@ public final class Servidor {
         Connection conexao = abrirConexao(configuracao);
         HttpServer servidor = HttpServer.create(
                 new InetSocketAddress(configuracao.portaServidor()), FILA_PADRAO);
-        montarRotas(conexao).registrar(servidor);
+        montarRotasDeJogo(conexao).registrar(servidor);
+        montarRotasDeUsuario(conexao).registrar(servidor);
         // Executor padrão: uma requisição por vez, o que protege a conexão JDBC compartilhada.
         servidor.setExecutor(null);
         servidor.start();
@@ -55,9 +63,16 @@ public final class Servidor {
                 configuracao.urlBanco(), configuracao.usuarioBanco(), configuracao.senhaBanco());
     }
 
-    private static JogoRoutes montarRotas(Connection conexao) {
+    private static JogoRoutes montarRotasDeJogo(Connection conexao) {
         JogoRepository repositorio = new JogoRepositoryJdbc(conexao);
         JogoController controller = new JogoController(new JogoService(repositorio));
         return new JogoRoutes(controller, new VerificadorAutenticacaoProvisorio());
+    }
+
+    private static UsuarioRoutes montarRotasDeUsuario(Connection conexao) {
+        UsuarioRepository repositorio = new UsuarioRepositoryJdbc(conexao);
+        UsuarioService service =
+                new UsuarioService(repositorio, new BcryptCriptografiaSenha());
+        return new UsuarioRoutes(new UsuarioController(service));
     }
 }
