@@ -12,6 +12,10 @@ package gametrack.back.config;
 public final class Mensagens {
 
     public static final int TAMANHO_MINIMO_SENHA = 8;
+    /** Limite do bcrypt: 72 bytes, contando o terminador que a biblioteca acrescenta. */
+    public static final int TAMANHO_MAXIMO_SENHA_BYTES = 71;
+    public static final int TAMANHO_MINIMO_APELIDO = 3;
+    public static final int TAMANHO_MAXIMO_APELIDO = 30;
     public static final int TIMEOUT_BANCO_SEGUNDOS = 5;
     public static final int LIMITE_MAXIMO_CATALOGO = 500;
 
@@ -21,6 +25,10 @@ public final class Mensagens {
     public static final String APELIDO_JA_UTILIZADO = "Apelido já utilizado!";
     public static final String SENHA_TAMANHO_INVALIDO =
             "A senha deve ter no mínimo 8 caracteres!";
+    public static final String SENHA_MUITO_LONGA = "A senha é longa demais!";
+    public static final String APELIDO_TAMANHO_INVALIDO =
+            "O apelido deve ter de 3 a 30 caracteres!";
+    public static final String CORPO_INVALIDO = "Os dados enviados são inválidos.";
     public static final String ERRO_COMUNICACAO_BANCO =
             "Erro ao comunicar com o banco de dados.";
 
