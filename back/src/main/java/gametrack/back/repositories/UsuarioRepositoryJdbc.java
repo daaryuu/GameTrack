@@ -1,6 +1,7 @@
 package gametrack.back.repositories;
 
 import gametrack.back.config.Mensagens;
+import gametrack.back.model.Perfil;
 import gametrack.back.model.Usuario;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -23,9 +24,9 @@ public class UsuarioRepositoryJdbc implements UsuarioRepository {
     private static final String SQL_EXISTE_APELIDO =
             "SELECT 1 FROM Usuario WHERE apelido = ? LIMIT 1";
     private static final String SQL_BUSCAR_POR_APELIDO =
-            "SELECT id, apelido, senha_hash FROM Usuario WHERE apelido = ?";
+            "SELECT id, apelido, senha_hash, perfil FROM Usuario WHERE apelido = ?";
     private static final String SQL_INSERIR_USUARIO =
-            "INSERT INTO Usuario (apelido, senha_hash) VALUES (?, ?)";
+            "INSERT INTO Usuario (apelido, senha_hash, perfil) VALUES (?, ?, ?)";
 
     private final Connection conexao;
 
@@ -77,8 +78,10 @@ public class UsuarioRepositoryJdbc implements UsuarioRepository {
     }
 
     private Usuario mapearUsuario(ResultSet rs) throws SQLException {
-        return new Usuario(
+        Usuario usuario = new Usuario(
                 rs.getInt("id"), rs.getString("apelido"), rs.getString("senha_hash"));
+        usuario.setPerfil(Perfil.valueOf(rs.getString("perfil")));
+        return usuario;
     }
 
     /**
@@ -111,6 +114,7 @@ public class UsuarioRepositoryJdbc implements UsuarioRepository {
         stmt.setQueryTimeout(Mensagens.TIMEOUT_BANCO_SEGUNDOS);
         stmt.setString(1, usuario.getApelido());
         stmt.setString(2, usuario.getSenhaHash());
+        stmt.setString(3, usuario.getPerfil().name());
     }
 
     private int extrairIdGerado(PreparedStatement stmt) throws SQLException {

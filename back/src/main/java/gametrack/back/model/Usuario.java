@@ -10,6 +10,7 @@ public class Usuario {
     private Integer id;
     private String apelido;
     private String senhaHash;
+    private Perfil perfil = Perfil.USUARIO;
 
     /**
      * Constrói um novo usuário com apelido e hash da senha.
@@ -22,6 +23,24 @@ public class Usuario {
         this.id = id;
         this.apelido = apelido;
         this.senhaHash = senhaHash;
+    }
+
+    /**
+     * Retorna o perfil da conta, que é {@link Perfil#USUARIO} se não for definido outro.
+     *
+     * @return perfil da conta
+     */
+    public Perfil getPerfil() {
+        return perfil;
+    }
+
+    /**
+     * Define o perfil da conta.
+     *
+     * @param perfil novo perfil
+     */
+    public void setPerfil(Perfil perfil) {
+        this.perfil = perfil;
     }
 
     /**

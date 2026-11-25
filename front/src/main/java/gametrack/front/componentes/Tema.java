@@ -38,6 +38,8 @@ public final class Tema {
     public static final Color LILAS = new Color(0xB69AF8);
     /** Texto escuro, para uso sobre o lilás. */
     public static final Color TEXTO_ESCURO = new Color(0x14161F);
+    /** Fundo do botão de excluir. */
+    public static final Color PERIGO = new Color(0xB3261E);
     /** Mensagens de erro. */
     public static final Color ERRO = new Color(0xFF8A8A);
     /** Mensagens de sucesso. */

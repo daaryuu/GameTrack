@@ -1,6 +1,7 @@
 package gametrack.front.componentes;
 
 import gametrack.front.dto.JogoDTO;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -12,6 +13,10 @@ import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -23,10 +28,11 @@ import javax.swing.SwingConstants;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
+import javax.swing.table.TableColumn;
 
 /**
- * Tabela de jogos no tema escuro: linhas alternadas, cabeçalho discreto e a coluna
- * "Ver detalhes" como link clicável.
+ * Tabela de jogos no tema escuro: linhas alternadas, cabeçalho discreto e uma coluna com as
+ * ações clicáveis de cada jogo.
  */
 public class TabelaJogos extends JTable {
 
@@ -34,33 +40,38 @@ public class TabelaJogos extends JTable {
     private static final int ALTURA_CABECALHO = 36;
     private static final int PREENCHIMENTO = 16;
     private static final int LARGURA_BARRA = 10;
+    private static final int LARGURA_MINIMA_ANO = 70;
     private static final float TAMANHO_FONTE = 13f;
     private static final float TAMANHO_FONTE_CABECALHO = 12f;
     private static final int[] LARGURAS_COLUNAS = {300, 200, 250, 100, 150};
 
     private final ModeloTabelaJogos modelo;
-    private Consumer<JogoDTO> aoVerDetalhes = jogo -> { };
+    private final CelulaAcoes celulaAcoes;
+    private final Map<AcaoJogo, Consumer<JogoDTO>> aoAcionar = new EnumMap<>(AcaoJogo.class);
 
     /**
      * Cria a tabela.
      *
      * @param modelo jogos exibidos
+     * @param acoes ações oferecidas em cada linha, da esquerda para a direita
      */
-    public TabelaJogos(ModeloTabelaJogos modelo) {
+    public TabelaJogos(ModeloTabelaJogos modelo, List<AcaoJogo> acoes) {
         super(modelo);
         this.modelo = modelo;
+        this.celulaAcoes = new CelulaAcoes(acoes);
         configurarAparencia();
         configurarColunas();
         configurarCliqueNaAcao();
     }
 
     /**
-     * Define o que acontece ao clicar em "Ver detalhes".
+     * Define o que acontece ao clicar em uma ação da linha.
      *
-     * @param acao recebe o jogo da linha clicada
+     * @param acao ação clicada
+     * @param tratamento recebe o jogo da linha clicada
      */
-    public void definirAoVerDetalhes(Consumer<JogoDTO> acao) {
-        this.aoVerDetalhes = acao;
+    public void definirAoAcionar(AcaoJogo acao, Consumer<JogoDTO> tratamento) {
+        aoAcionar.put(acao, tratamento);
     }
 
     /**
@@ -99,21 +110,23 @@ public class TabelaJogos extends JTable {
         for (int coluna = 0; coluna < LARGURAS_COLUNAS.length; coluna++) {
             getColumnModel().getColumn(coluna).setPreferredWidth(LARGURAS_COLUNAS[coluna]);
         }
+        getColumnModel().getColumn(ModeloTabelaJogos.COLUNA_ANO).setMinWidth(LARGURA_MINIMA_ANO);
+        TableColumn colunaAcao = getColumnModel().getColumn(ModeloTabelaJogos.COLUNA_ACAO);
+        colunaAcao.setCellRenderer(celulaAcoes);
+        colunaAcao.setMinWidth(celulaAcoes.larguraNecessaria());
     }
 
     private void configurarCliqueNaAcao() {
         MouseAdapter ouvinte = new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent evento) {
-                JogoDTO jogo = jogoNaAcao(evento.getPoint());
-                if (jogo != null) {
-                    aoVerDetalhes.accept(jogo);
-                }
+                acaoNoPonto(evento.getPoint())
+                        .ifPresent(acao -> acionar(acao, rowAtPoint(evento.getPoint())));
             }
 
             @Override
             public void mouseMoved(MouseEvent evento) {
-                boolean sobreAcao = jogoNaAcao(evento.getPoint()) != null;
+                boolean sobreAcao = acaoNoPonto(evento.getPoint()).isPresent();
                 setCursor(Cursor.getPredefinedCursor(
                         sobreAcao ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
             }
@@ -122,13 +135,28 @@ public class TabelaJogos extends JTable {
         addMouseMotionListener(ouvinte);
     }
 
-    private JogoDTO jogoNaAcao(Point ponto) {
-        int linha = rowAtPoint(ponto);
-        boolean naAcao = columnAtPoint(ponto) == ModeloTabelaJogos.COLUNA_ACAO;
-        return linha >= 0 && naAcao ? modelo.jogoNaLinha(linha) : null;
+    private void acionar(AcaoJogo acao, int linha) {
+        aoAcionar.getOrDefault(acao, jogo -> { }).accept(modelo.jogoNaLinha(linha));
     }
 
-    /** Desenho das células: linhas alternadas e a coluna de ação como link. */
+    private Optional<AcaoJogo> acaoNoPonto(Point ponto) {
+        int linha = rowAtPoint(ponto);
+        if (linha < 0 || columnAtPoint(ponto) != ModeloTabelaJogos.COLUNA_ACAO) {
+            return Optional.empty();
+        }
+        Rectangle celula = getCellRect(linha, ModeloTabelaJogos.COLUNA_ACAO, false);
+        Point pontoNaCelula = new Point(ponto.x - celula.x, ponto.y - celula.y);
+        return celulaAcoes.acaoNoPonto(pontoNaCelula, celula.getSize());
+    }
+
+    static Color corDaLinha(boolean selecionada, int linha) {
+        if (selecionada) {
+            return Tema.SELECAO;
+        }
+        return linha % 2 == 0 ? Tema.LINHA_ESCURA : Tema.LINHA_CLARA;
+    }
+
+    /** Desenho das células de texto, em linhas alternadas. */
     private static class RenderizadorCelula extends DefaultTableCellRenderer {
 
         @Override
@@ -136,27 +164,12 @@ public class TabelaJogos extends JTable {
                 boolean selecionada, boolean comFoco, int linha, int coluna) {
             JLabel rotulo = (JLabel) super.getTableCellRendererComponent(tabela, valor,
                     selecionada, false, linha, coluna);
-            boolean acao = coluna == ModeloTabelaJogos.COLUNA_ACAO;
             rotulo.setBorder(BorderFactory.createEmptyBorder(0, PREENCHIMENTO, 0, PREENCHIMENTO));
             rotulo.setFont(Tema.fonte(Font.PLAIN, TAMANHO_FONTE));
             rotulo.setBackground(corDaLinha(selecionada, linha));
-            rotulo.setForeground(corDoTexto(coluna));
-            rotulo.setHorizontalAlignment(acao ? SwingConstants.RIGHT : SwingConstants.LEFT);
+            rotulo.setForeground(coluna == ModeloTabelaJogos.COLUNA_TITULO
+                    ? Tema.TEXTO : Tema.TEXTO_CELULA);
             return rotulo;
-        }
-
-        private java.awt.Color corDaLinha(boolean selecionada, int linha) {
-            if (selecionada) {
-                return Tema.SELECAO;
-            }
-            return linha % 2 == 0 ? Tema.LINHA_ESCURA : Tema.LINHA_CLARA;
-        }
-
-        private java.awt.Color corDoTexto(int coluna) {
-            if (coluna == ModeloTabelaJogos.COLUNA_ACAO) {
-                return Tema.LINK;
-            }
-            return coluna == ModeloTabelaJogos.COLUNA_TITULO ? Tema.TEXTO : Tema.TEXTO_CELULA;
         }
     }
 

@@ -2,11 +2,14 @@ package gametrack.back.services;
 
 import gametrack.back.config.Mensagens;
 import gametrack.back.model.CadastroUsuarioDTO;
+import gametrack.back.model.Perfil;
 import gametrack.back.model.Usuario;
 import gametrack.back.repositories.RegistroDuplicadoException;
 import gametrack.back.repositories.UsuarioRepository;
 import gametrack.back.seguranca.CriptografiaSenha;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * Executa as regras de negócio referentes ao cadastro e gerenciamento de contas.
@@ -49,6 +52,32 @@ public class UsuarioService {
         String senhaHash = criptografiaSenha.gerarHash(dados.senha());
         Usuario novoUsuario = new Usuario(null, apelidoLimpo, senhaHash);
         return inserir(novoUsuario);
+    }
+
+    /**
+     * Garante que a conta do administrador exista. Uma conta comum que já use o apelido não é
+     * promovida, pois daria acesso de administrador a quem a cadastrou.
+     *
+     * @param senha fornece a senha inicial, consultada só se a conta precisar ser criada
+     * @throws IllegalStateException se o apelido pertencer a uma conta comum
+     * @throws NegocioException se a senha inicial violar as regras do requisito
+     */
+    public void garantirAdministrador(Supplier<String> senha) {
+        Optional<Usuario> existente =
+                usuarioRepository.buscarPorApelido(Mensagens.APELIDO_ADMINISTRADOR);
+        if (existente.isEmpty()) {
+            inserir(criarAdministrador(senha.get()));
+        } else if (existente.get().getPerfil() != Perfil.ADMINISTRADOR) {
+            throw new IllegalStateException(Mensagens.APELIDO_ADMINISTRADOR_OCUPADO);
+        }
+    }
+
+    private Usuario criarAdministrador(String senha) {
+        validarSenha(senha);
+        Usuario administrador = new Usuario(
+                null, Mensagens.APELIDO_ADMINISTRADOR, criptografiaSenha.gerarHash(senha));
+        administrador.setPerfil(Perfil.ADMINISTRADOR);
+        return administrador;
     }
 
     private Usuario inserir(Usuario usuario) {

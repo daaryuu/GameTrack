@@ -101,6 +101,15 @@ public final class Configuracao {
                 "sessao.expiracao.minutos", EXPIRACAO_PADRAO_MINUTOS).trim()));
     }
 
+    /**
+     * Devolve a senha inicial da conta do administrador.
+     *
+     * @return valor de {@code admin.senha}
+     */
+    public String senhaAdministrador() {
+        return obrigatoria("admin.senha");
+    }
+
     private String obrigatoria(String chave) {
         String valor = propriedades.getProperty(chave);
         if (valor == null || valor.isBlank()) {

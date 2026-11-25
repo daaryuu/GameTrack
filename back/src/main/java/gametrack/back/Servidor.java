@@ -57,8 +57,11 @@ public final class Servidor {
                 new InetSocketAddress(configuracao.portaServidor()), FILA_PADRAO);
         SessoesEmMemoria sessoes = new SessoesEmMemoria(
                 configuracao.expiracaoDaSessao(), Clock.systemUTC());
+        UsuarioService usuarioService = new UsuarioService(
+                new UsuarioRepositoryJdbc(conexao), new BcryptCriptografiaSenha());
+        usuarioService.garantirAdministrador(configuracao::senhaAdministrador);
         montarRotasDeJogo(conexao, sessoes).registrar(servidor);
-        montarRotasDeUsuario(conexao).registrar(servidor);
+        new UsuarioRoutes(new UsuarioController(usuarioService)).registrar(servidor);
         montarRotasDeSessao(conexao, sessoes).registrar(servidor);
         // Executor padrão: uma requisição por vez, o que protege a conexão JDBC compartilhada.
         servidor.setExecutor(null);
@@ -77,13 +80,6 @@ public final class Servidor {
         JogoRepository repositorio = new JogoRepositoryJdbc(conexao);
         JogoController controller = new JogoController(new JogoService(repositorio));
         return new JogoRoutes(controller, verificador);
-    }
-
-    private static UsuarioRoutes montarRotasDeUsuario(Connection conexao) {
-        UsuarioRepository repositorio = new UsuarioRepositoryJdbc(conexao);
-        UsuarioService service =
-                new UsuarioService(repositorio, new BcryptCriptografiaSenha());
-        return new UsuarioRoutes(new UsuarioController(service));
     }
 
     private static SessaoRoutes montarRotasDeSessao(

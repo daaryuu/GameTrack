@@ -18,6 +18,7 @@ public final class Mensagens {
     public static final int TAMANHO_MAXIMO_APELIDO = 30;
     public static final int TIMEOUT_BANCO_SEGUNDOS = 5;
     public static final int LIMITE_MAXIMO_CATALOGO = 500;
+    public static final String APELIDO_ADMINISTRADOR = "admin";
 
     public static final String CONTA_CADASTRADA_SUCESSO = "Conta cadastrada com sucesso!";
     public static final String SENHA_NAO_INFORMADA = "Informe a senha!";
@@ -42,6 +43,9 @@ public final class Mensagens {
     public static final String CONFIGURACAO_NAO_ENCONTRADA =
             "Arquivo config.properties não encontrado. Copie config.example.properties para "
                     + "config.properties e preencha os dados do banco.";
+    public static final String APELIDO_ADMINISTRADOR_OCUPADO =
+            "O apelido admin pertence a uma conta comum. Renomeie ou exclua essa conta no banco "
+                    + "para o servidor criar o administrador.";
     public static final String CONFIGURACAO_INCOMPLETA =
             "Propriedade obrigatória ausente em config.properties: ";
 

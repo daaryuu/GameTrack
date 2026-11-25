@@ -76,7 +76,10 @@ public class CadastroContaView extends JPanel {
     private void cadastrar() {
         CadastroUsuarioDTO dados =
                 new CadastroUsuarioDTO(formulario.apelido(), formulario.senha());
-        formulario.enviar(() -> cliente.cadastrar(dados), this::concluirCadastro);
+        formulario.enviar(() -> {
+            cliente.cadastrar(dados);
+            return dados;
+        }, cadastrados -> concluirCadastro());
     }
 
     private void concluirCadastro() {

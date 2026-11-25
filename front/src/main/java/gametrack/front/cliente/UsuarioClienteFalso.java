@@ -2,6 +2,7 @@ package gametrack.front.cliente;
 
 import gametrack.front.dto.CadastroUsuarioDTO;
 import gametrack.front.dto.CredenciaisDTO;
+import gametrack.front.dto.Perfil;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -9,7 +10,8 @@ import java.util.Map;
 /**
  * Implementação de {@link UsuarioCliente} e {@link SessaoCliente} que guarda as contas em
  * memória e imita as respostas do servidor. Serve para desenvolver e testar as telas sem o
- * servidor. As contas somem ao fechar o programa.
+ * servidor. Já começa com a conta de administrador {@code admin}, de senha {@code admin1234},
+ * que só existe aqui. As contas somem ao fechar o programa.
  *
  * @see RF001
  * @see RF002
@@ -24,7 +26,11 @@ public class UsuarioClienteFalso implements UsuarioCliente, SessaoCliente {
             "A senha deve ter no mínimo 8 caracteres!";
     private static final String CREDENCIAIS_INCORRETAS = "Apelido ou senha incorretos!";
 
-    private final Map<String, String> senhasPorApelido = new HashMap<>();
+    private static final String APELIDO_ADMINISTRADOR = "admin";
+    private static final String SENHA_ADMINISTRADOR = "admin1234";
+
+    private final Map<String, String> senhasPorApelido = new HashMap<>(
+            Map.of(APELIDO_ADMINISTRADOR, SENHA_ADMINISTRADOR));
 
     @Override
     public synchronized void cadastrar(CadastroUsuarioDTO dados) {
@@ -35,11 +41,13 @@ public class UsuarioClienteFalso implements UsuarioCliente, SessaoCliente {
     }
 
     @Override
-    public synchronized void autenticar(CredenciaisDTO credenciais) {
-        String senha = senhasPorApelido.get(normalizar(credenciais.apelido()));
+    public synchronized Perfil autenticar(CredenciaisDTO credenciais) {
+        String apelido = normalizar(credenciais.apelido());
+        String senha = senhasPorApelido.get(apelido);
         if (senha == null || !senha.equals(credenciais.senha())) {
             throw new ErroServidorException(CREDENCIAIS_INCORRETAS);
         }
+        return APELIDO_ADMINISTRADOR.equals(apelido) ? Perfil.ADMINISTRADOR : Perfil.USUARIO;
     }
 
     private String normalizar(String apelido) {

@@ -52,7 +52,7 @@ public class AutenticacaoService {
                 .filter(conta -> verificadorSenha.eSenhaCorreta(
                         credenciais.senha(), conta.getSenhaHash()))
                 .orElseThrow(this::credenciaisIncorretas);
-        return new SessaoDTO(sessoes.abrir(usuario.getId()));
+        return new SessaoDTO(sessoes.abrir(usuario.getId()), usuario.getPerfil());
     }
 
     private boolean temCredenciais(CredenciaisDTO credenciais) {

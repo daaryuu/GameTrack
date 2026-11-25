@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import gametrack.back.config.Mensagens;
 import gametrack.back.model.CadastroUsuarioDTO;
+import gametrack.back.model.Perfil;
 import gametrack.back.model.Usuario;
 import gametrack.back.repositories.RegistroDuplicadoException;
 import gametrack.back.repositories.UsuarioRepository;
@@ -149,18 +150,60 @@ public class UsuarioServiceTest {
         assertEquals(Mensagens.APELIDO_JA_UTILIZADO, erro.getMessage());
     }
 
+    /**
+     * Garante que o administrador seja criado uma única vez, com a senha inicial em hash.
+     */
+    @Test
+    public void deveCriarOAdministradorUmaUnicaVez() {
+        UsuarioRepositoryFalso repositorio = new UsuarioRepositoryFalso();
+        usuarioService = new UsuarioService(repositorio, senha -> "hash_" + senha);
+
+        usuarioService.garantirAdministrador(() -> "senha1234");
+        usuarioService.garantirAdministrador(() -> {
+            throw new AssertionError("A senha não deveria ser consultada de novo.");
+        });
+
+        assertEquals(1, repositorio.usuarios.size());
+        assertEquals("admin", repositorio.usuarios.get(0).getApelido());
+        assertEquals("hash_senha1234", repositorio.usuarios.get(0).getSenhaHash());
+        assertEquals(Perfil.ADMINISTRADOR, repositorio.usuarios.get(0).getPerfil());
+    }
+
+    /**
+     * Garante que uma conta comum com o apelido admin não ganhe acesso de administrador.
+     */
+    @Test
+    public void naoDevePromoverContaComumAAdministrador() {
+        Usuario comum = usuarioService.cadastrar(new CadastroUsuarioDTO("admin", "senha1234"));
+
+        assertThrows(IllegalStateException.class,
+                () -> usuarioService.garantirAdministrador(() -> "outra1234"));
+        assertEquals(Perfil.USUARIO, comum.getPerfil());
+    }
+
+    /**
+     * Garante que a senha inicial do administrador siga o RNF005.
+     */
+    @Test
+    public void deveValidarASenhaInicialDoAdministrador() {
+        assertThrows(NegocioException.class,
+                () -> usuarioService.garantirAdministrador(() -> "1234567"));
+    }
+
     private static final class UsuarioRepositoryFalso implements UsuarioRepository {
 
         private final List<Usuario> usuarios = new ArrayList<>();
 
         @Override
         public boolean existePorApelido(String apelido) {
-            return usuarios.stream().anyMatch(u -> u.getApelido().equals(apelido));
+            return buscarPorApelido(apelido).isPresent();
         }
 
         @Override
         public Optional<Usuario> buscarPorApelido(String apelido) {
-            return Optional.empty();
+            return usuarios.stream()
+                    .filter(usuario -> usuario.getApelido().equals(apelido))
+                    .findFirst();
         }
 
         @Override

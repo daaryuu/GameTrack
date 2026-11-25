@@ -12,6 +12,7 @@ import gametrack.front.dto.CadastroUsuarioDTO;
 import gametrack.front.dto.CredenciaisDTO;
 import gametrack.front.dto.FiltroJogoDTO;
 import gametrack.front.dto.JogoDTO;
+import gametrack.front.dto.Perfil;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -88,6 +89,15 @@ class ClientesHttpTest {
         preparar(200, "[]");
         jogos.listar(FiltroJogoDTO.semFiltro());
         assertEquals("Bearer abc123", credencialRecebida);
+    }
+
+    @Test
+    void deveDevolverOPerfilDaContaOuODeMenorAcesso() {
+        preparar(201, "{\"token\":\"abc\",\"perfil\":\"ADMINISTRADOR\"}");
+        assertEquals(Perfil.ADMINISTRADOR, sessoes.autenticar(CREDENCIAIS));
+
+        preparar(201, "{\"token\":\"abc\",\"perfil\":\"DESCONHECIDO\"}");
+        assertEquals(Perfil.USUARIO, sessoes.autenticar(CREDENCIAIS));
     }
 
     @Test

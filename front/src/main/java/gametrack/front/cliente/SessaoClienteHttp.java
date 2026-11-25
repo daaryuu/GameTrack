@@ -1,6 +1,7 @@
 package gametrack.front.cliente;
 
 import gametrack.front.dto.CredenciaisDTO;
+import gametrack.front.dto.Perfil;
 import gametrack.front.dto.SessaoDTO;
 
 /**
@@ -26,11 +27,13 @@ public class SessaoClienteHttp implements SessaoCliente {
     }
 
     @Override
-    public void autenticar(CredenciaisDTO credenciais) {
+    public Perfil autenticar(CredenciaisDTO credenciais) {
         SessaoDTO sessao = conexao.post(CAMINHO_SESSOES, credenciais, SessaoDTO.class);
         if (sessao == null || sessao.token() == null || sessao.token().isBlank()) {
             throw new ErroServidorException(MENSAGEM_SEM_TOKEN);
         }
         conexao.definirToken(sessao.token());
+        // Sem um perfil conhecido, vale o de menor acesso.
+        return sessao.perfil() != null ? sessao.perfil() : Perfil.USUARIO;
     }
 }
