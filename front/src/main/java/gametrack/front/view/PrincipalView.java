@@ -9,13 +9,12 @@ import javax.swing.JPanel;
 
 /**
  * Reúne as telas e controla a navegação entre elas: começa no login, vai ao cadastro de conta
- * e, depois da autenticação, abre o catálogo, de onde o administrador chega ao cadastro e à
- * alteração de jogo. Se a sessão expirar, volta ao login.
+ * e, depois da autenticação, abre o catálogo, de onde o administrador chega ao cadastro de
+ * jogo. Se a sessão expirar, volta ao login.
  *
  * @see RF001
  * @see RF002
  * @see RF003
- * @see RF005
  * @see RNF007
  */
 public class PrincipalView extends JPanel {
@@ -25,8 +24,7 @@ public class PrincipalView extends JPanel {
     private static final String CATALOGO = "catalogo";
     private static final String JOGO = "jogo";
     private static final String JOGO_CADASTRADO = "Jogo cadastrado com sucesso!";
-    private static final String JOGO_ALTERADO = "Jogo alterado com sucesso!";
-    private static final String CONTA_CADASTRADA = "Conta cadastrada com sucesso!";
+    private static final String CONTA_CADASTRADA ="Conta cadastrada com sucesso!";
     private static final String SESSAO_EXPIRADA = "Sua sessão expirou. Entre novamente.";
 
     private final CardLayout layout = new CardLayout();
@@ -64,20 +62,17 @@ public class PrincipalView extends JPanel {
         // A tela é criada só agora porque carrega os jogos ao ser criada, o que exige a sessão.
         CatalogoListaView catalogo = new CatalogoListaView(jogos, perfil);
         catalogo.definirAoExpirarSessao(() -> encerrar(catalogo));
-        catalogo.definirAoAdicionar(() -> abrirFormulario(
-                catalogo, JogoFormView.paraCadastro(jogos), JOGO_CADASTRADO));
-        catalogo.definirAoAlterar(jogo -> abrirFormulario(
-                catalogo, JogoFormView.paraAlteracao(jogos, jogo.id()), JOGO_ALTERADO));
+        catalogo.definirAoAdicionar(() -> abrirCadastroDeJogo(catalogo));
         add(catalogo, CATALOGO);
         layout.show(this, CATALOGO);
     }
 
-    private void abrirFormulario(
-            CatalogoListaView catalogo, JogoFormView formulario, String mensagemAoSalvar) {
+    private void abrirCadastroDeJogo(CatalogoListaView catalogo) {
+        JogoFormView formulario = new JogoFormView(jogos);
         formulario.definirAoCancelar(() -> fechar(formulario));
-        formulario.definirAoSalvar(() -> {
+        formulario.definirAoCadastrar(() -> {
             fechar(formulario);
-            catalogo.recarregar(mensagemAoSalvar);
+            catalogo.recarregar(JOGO_CADASTRADO);
         });
         formulario.definirAoExpirarSessao(() -> {
             fechar(formulario);
