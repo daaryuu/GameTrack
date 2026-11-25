@@ -30,7 +30,9 @@ public final class Tema {
     public static final Color TEXTO_SECUNDARIO = new Color(0x9CA1B5);
     /** Cor de destaque dos botões principais. */
     public static final Color ROXO = new Color(0x6C3FC8);
-    /** Fundo do cartão das telas de conta. */
+    /** Fundo da tela de login. */
+    public static final Color FUNDO_LOGIN = new Color(0x0C0D13);
+    /** Fundo do cartão de cadastro e dos campos da tela de login. */
     public static final Color FUNDO_CARTAO_CONTA = new Color(0x151722);
     /** Fundo do botão principal das telas de conta. */
     public static final Color LILAS = new Color(0xB69AF8);

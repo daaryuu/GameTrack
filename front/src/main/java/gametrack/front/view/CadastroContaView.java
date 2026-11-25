@@ -1,27 +1,13 @@
 package gametrack.front.view;
 
-import gametrack.front.cliente.ErroServidorException;
 import gametrack.front.cliente.UsuarioCliente;
-import gametrack.front.componentes.BotaoArredondado;
-import gametrack.front.componentes.CampoSenhaComDica;
-import gametrack.front.componentes.CampoTextoComDica;
 import gametrack.front.componentes.PainelArredondado;
 import gametrack.front.componentes.Tema;
 import gametrack.front.dto.CadastroUsuarioDTO;
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.GridBagLayout;
-import java.util.concurrent.ExecutionException;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingWorker;
 
 /**
  * Formulário de cadastro de conta (I_CadastroConta). As mensagens de erro e de sucesso
@@ -31,27 +17,17 @@ import javax.swing.SwingWorker;
  */
 public class CadastroContaView extends JPanel {
 
-    private static final String TITULO_TELA = "Crie sua conta";
-    private static final String TEXTO_BOTAO = "Cadastrar";
-    private static final String SEM_MENSAGEM = " ";
+    private static final FormularioConta.Textos TEXTOS = new FormularioConta.Textos(
+            "Crie sua conta", "Escolha seu nome de usuário", "Crie sua senha", "Cadastrar");
     private static final String MENSAGEM_SUCESSO = "Conta cadastrada com sucesso!";
-    private static final String MENSAGEM_ERRO = "Erro inesperado ao cadastrar a conta!";
-
     private static final int MARGEM = 36;
-    private static final int LARGURA_CAMPO = 326;
-    private static final int ALTURA_CAMPO = 41;
-    private static final int ESPACO = 18;
-    private static final int ESPACO_ROTULO = 8;
-    private static final float TAMANHO_TITULO = 24f;
-    private static final float TAMANHO_ROTULO = 12f;
+    private static final int MARGEM_INFERIOR = 18;
+    private static final int ESPACO_TITULO = 18;
 
     private final UsuarioCliente cliente;
-    private final CampoTextoComDica campoApelido =
-            new CampoTextoComDica("Escolha seu nome de usuário");
-    private final CampoSenhaComDica campoSenha = new CampoSenhaComDica("Crie sua senha");
-    private final BotaoArredondado botaoCadastrar =
-            new BotaoArredondado(TEXTO_BOTAO, Tema.LILAS);
-    private final JLabel mensagem = criarRotulo(SEM_MENSAGEM, Font.PLAIN, TAMANHO_ROTULO);
+    private final FormularioConta formulario = new FormularioConta(TEXTOS, ESPACO_TITULO);
+    private final ConviteComLink convite =
+            new ConviteComLink("Já tem uma conta?", "Entrar");
     private Runnable aoCadastrar = () -> { };
 
     /**
@@ -64,9 +40,17 @@ public class CadastroContaView extends JPanel {
         this.cliente = cliente;
         setBackground(Tema.FUNDO_JANELA);
         add(criarCartao());
-        campoApelido.addActionListener(evento -> campoSenha.requestFocusInWindow());
-        campoSenha.addActionListener(evento -> botaoCadastrar.doClick());
-        botaoCadastrar.addActionListener(evento -> cadastrar());
+        formulario.definirAoEnviar(this::cadastrar);
+        formulario.limparAoEsconder(this);
+    }
+
+    /**
+     * Define o que fazer quando o usuário escolhe voltar para o login.
+     *
+     * @param acao ação que abre a tela de login
+     */
+    public void definirAoVoltar(Runnable acao) {
+        convite.definirAoClicar(acao);
     }
 
     /**
@@ -81,103 +65,23 @@ public class CadastroContaView extends JPanel {
     private PainelArredondado criarCartao() {
         PainelArredondado cartao =
                 new PainelArredondado(Tema.FUNDO_CARTAO_CONTA, Tema.FUNDO_CARTAO_CONTA);
-        cartao.setBorder(BorderFactory.createEmptyBorder(MARGEM, MARGEM, ESPACO, MARGEM));
-        cartao.add(criarFormulario(), BorderLayout.CENTER);
+        cartao.setBorder(
+                BorderFactory.createEmptyBorder(MARGEM, MARGEM, MARGEM_INFERIOR, MARGEM));
+        cartao.add(formulario, BorderLayout.CENTER);
+        convite.setBorder(BorderFactory.createEmptyBorder(MARGEM_INFERIOR, 0, 0, 0));
+        cartao.add(convite, BorderLayout.SOUTH);
         return cartao;
     }
 
-    private JPanel criarFormulario() {
-        JPanel formulario = new JPanel();
-        formulario.setOpaque(false);
-        formulario.setLayout(new BoxLayout(formulario, BoxLayout.Y_AXIS));
-        formulario.add(criarRotulo(TITULO_TELA, Font.BOLD, TAMANHO_TITULO));
-        formulario.add(Box.createVerticalStrut(ESPACO));
-        adicionarCampo(formulario, "Nome de usuário", campoApelido);
-        adicionarCampo(formulario, "Senha", campoSenha);
-        botaoCadastrar.setForeground(Tema.TEXTO_ESCURO);
-        ajustarTamanho(botaoCadastrar);
-        formulario.add(botaoCadastrar);
-        formulario.add(Box.createVerticalStrut(ESPACO_ROTULO));
-        formulario.add(mensagem);
-        return formulario;
-    }
-
-    private void adicionarCampo(JPanel formulario, String texto, JComponent campo) {
-        JLabel rotulo = criarRotulo(texto, Font.PLAIN, TAMANHO_ROTULO);
-        rotulo.setLabelFor(campo);
-        ajustarTamanho(campo);
-        formulario.add(rotulo);
-        formulario.add(Box.createVerticalStrut(ESPACO_ROTULO));
-        formulario.add(campo);
-        formulario.add(Box.createVerticalStrut(ESPACO));
-    }
-
-    private void ajustarTamanho(JComponent componente) {
-        Dimension tamanho = new Dimension(LARGURA_CAMPO, ALTURA_CAMPO);
-        componente.setPreferredSize(tamanho);
-        componente.setMinimumSize(tamanho);
-        componente.setMaximumSize(tamanho);
-        componente.setAlignmentX(Component.LEFT_ALIGNMENT);
-    }
-
     private void cadastrar() {
-        mensagem.setText(SEM_MENSAGEM);
-        botaoCadastrar.setEnabled(false);
-        new EnvioCadastro(new CadastroUsuarioDTO(campoApelido.getText().trim(),
-                new String(campoSenha.getPassword()))).execute();
+        CadastroUsuarioDTO dados =
+                new CadastroUsuarioDTO(formulario.apelido(), formulario.senha());
+        formulario.enviar(() -> cliente.cadastrar(dados), this::concluirCadastro);
     }
 
     private void concluirCadastro() {
-        campoApelido.setText("");
-        campoSenha.setText("");
-        exibirMensagem(MENSAGEM_SUCESSO, Tema.SUCESSO);
+        formulario.limpar();
+        formulario.exibirSucesso(MENSAGEM_SUCESSO);
         aoCadastrar.run();
-    }
-
-    private void exibirErro(Throwable causa) {
-        exibirMensagem(causa instanceof ErroServidorException
-                ? causa.getMessage() : MENSAGEM_ERRO, Tema.ERRO);
-    }
-
-    private void exibirMensagem(String texto, Color cor) {
-        mensagem.setForeground(cor);
-        mensagem.setText(texto);
-    }
-
-    private static JLabel criarRotulo(String texto, int estilo, float tamanho) {
-        JLabel rotulo = new JLabel(texto);
-        rotulo.setFont(Tema.fonte(estilo, tamanho));
-        rotulo.setForeground(Tema.TEXTO);
-        rotulo.setAlignmentX(Component.LEFT_ALIGNMENT);
-        return rotulo;
-    }
-
-    /** Envia o cadastro fora da thread da interface, para a tela não travar. */
-    private class EnvioCadastro extends SwingWorker<Void, Void> {
-
-        private final CadastroUsuarioDTO dados;
-
-        EnvioCadastro(CadastroUsuarioDTO dados) {
-            this.dados = dados;
-        }
-
-        @Override
-        protected Void doInBackground() {
-            cliente.cadastrar(dados);
-            return null;
-        }
-
-        @Override
-        protected void done() {
-            botaoCadastrar.setEnabled(true);
-            try {
-                get();
-                concluirCadastro();
-            } catch (ExecutionException e) {
-                exibirErro(e.getCause());
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
     }
 }
