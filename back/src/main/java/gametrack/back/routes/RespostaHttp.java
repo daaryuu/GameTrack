@@ -6,6 +6,7 @@ import gametrack.back.config.Mensagens;
 import gametrack.back.repositories.PersistenciaException;
 import gametrack.back.seguranca.AutenticacaoException;
 import gametrack.back.seguranca.PermissaoException;
+import gametrack.back.services.NaoEncontradoException;
 import gametrack.back.services.NegocioException;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -25,6 +26,7 @@ final class RespostaHttp {
     static final int STATUS_REQUISICAO_INVALIDA = 400;
     static final int STATUS_NAO_AUTENTICADO = 401;
     static final int STATUS_SEM_PERMISSAO = 403;
+    static final int STATUS_NAO_ENCONTRADO = 404;
     static final int STATUS_METODO_NAO_PERMITIDO = 405;
     static final int STATUS_ERRO_INTERNO = 500;
 
@@ -56,6 +58,8 @@ final class RespostaHttp {
                     enviarMensagem(troca, STATUS_NAO_AUTENTICADO, e.getMessage());
             case PermissaoException e ->
                     enviarMensagem(troca, STATUS_SEM_PERMISSAO, e.getMessage());
+            case NaoEncontradoException e ->
+                    enviarMensagem(troca, STATUS_NAO_ENCONTRADO, e.getMessage());
             case NegocioException e ->
                     enviarMensagem(troca, STATUS_REQUISICAO_INVALIDA, e.getMessage());
             case PersistenciaException e -> {
