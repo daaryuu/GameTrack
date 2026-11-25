@@ -21,8 +21,8 @@ import java.util.Map;
  * Registra e trata as rotas HTTP do catálogo de jogos.
  * Em {@code /jogos}, o GET responde 200 com a lista (vazia quando nada atende ao filtro), e o
  * POST responde 201 quando o jogo é cadastrado. Em {@code /jogos/{id}}, o GET responde 200 com
- * o jogo, e o PUT, 200 quando ele é alterado. POST e PUT são exclusivos do administrador. Os
- * erros são 400 para dados inválidos, 401 sem autenticação, 403 sem permissão, 404 para jogo
+ * o jogo, e o PUT e o DELETE, 200 quando ele é alterado ou excluído. POST, PUT e DELETE são
+ * exclusivos do administrador. Os erros são 400 para dados inválidos, 401 sem autenticação, 403 sem permissão, 404 para jogo
  * inexistente, 405 para outros métodos e 500 para falhas no banco ou inesperadas, sempre como
  * {@code {"mensagem": "..."}}.
  *
@@ -30,6 +30,7 @@ import java.util.Map;
  * @see RF004
  * @see RF004.1
  * @see RF005
+ * @see RF006
  * @see RNF003
  */
 public class JogoRoutes {
@@ -37,6 +38,7 @@ public class JogoRoutes {
     private static final String CAMINHO_JOGOS = "/jogos";
     private static final String CAMINHO_JOGO = "/jogos/";
     private static final String METODO_PUT = "PUT";
+    private static final String METODO_DELETE = "DELETE";
     private static final String METODO_GET = "GET";
     private static final String METODO_POST = "POST";
     private static final String CABECALHO_AUTH = "Authorization";
@@ -86,6 +88,7 @@ public class JogoRoutes {
             switch (troca.getRequestMethod()) {
                 case METODO_GET -> buscarJogo(troca);
                 case METODO_PUT -> alterarJogo(troca);
+                case METODO_DELETE -> excluirJogo(troca);
                 default -> recusarMetodo(troca);
             }
         } catch (RuntimeException e) {
@@ -107,6 +110,11 @@ public class JogoRoutes {
         Integer usuarioId = exigirUsuario(troca);
         String mensagem = jogoController.alterarJogo(
                 usuarioId, extrairId(troca), RequisicaoJson.ler(troca, DadosJogoDTO.class));
+        RespostaHttp.enviarMensagem(troca, RespostaHttp.STATUS_OK, mensagem);
+    }
+
+    private void excluirJogo(HttpExchange troca) throws IOException {
+        String mensagem = jogoController.excluirJogo(exigirUsuario(troca), extrairId(troca));
         RespostaHttp.enviarMensagem(troca, RespostaHttp.STATUS_OK, mensagem);
     }
 
