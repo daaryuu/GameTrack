@@ -30,6 +30,16 @@ public final class Tema {
     public static final Color TEXTO_SECUNDARIO = new Color(0x9CA1B5);
     /** Cor de destaque dos botões principais. */
     public static final Color ROXO = new Color(0x6C3FC8);
+    /** Fundo do cartão das telas de conta. */
+    public static final Color FUNDO_CARTAO_CONTA = new Color(0x151722);
+    /** Fundo do botão principal das telas de conta. */
+    public static final Color LILAS = new Color(0xB69AF8);
+    /** Texto escuro, para uso sobre o lilás. */
+    public static final Color TEXTO_ESCURO = new Color(0x14161F);
+    /** Mensagens de erro. */
+    public static final Color ERRO = new Color(0xFF8A8A);
+    /** Mensagens de sucesso. */
+    public static final Color SUCESSO = new Color(0x7EE2A8);
     /** Cor dos links. */
     public static final Color LINK = new Color(0xB79CFF);
     /** Fundo do cabeçalho da tabela. */
